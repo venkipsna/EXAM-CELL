@@ -158,10 +158,13 @@
 
     <div class="st" id="stLogin">
       <div class="login-box">
-        <div class="login-title">Enter Your Email ID</div>
-        <div class="login-sub">Use the same email registered with the Exam Cell.</div>
-        <div class="input-row">
+        <div class="login-title">Sign In</div>
+        <div class="login-sub">Enter your registered email ID and password (your mobile number).</div>
+        <div class="input-row" style="margin-bottom:10px">
           <input type="email" id="emailInput" placeholder="e.g. XXXXXXXXX@gmail.com" autocomplete="email">
+        </div>
+        <div class="input-row">
+          <input type="password" id="passwordInput" placeholder="Password (Mobile Number)" autocomplete="current-password">
           <button class="btn-go" id="goBtn" onclick="doVerify()">Proceed →</button>
         </div>
         <div class="err" id="errBox"></div>
@@ -349,17 +352,19 @@
   }
 
   function doVerify() {
-    const email = document.getElementById('emailInput').value.trim();
+    const email    = document.getElementById('emailInput').value.trim();
+    const password = document.getElementById('passwordInput').value.trim();
     const err   = document.getElementById('errBox');
     const btn   = document.getElementById('goBtn');
     err.classList.remove('show');
     if (!email) { showErr('Please enter your email.'); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('Please enter a valid email address.'); return; }
+    if (!password) { showErr('Please enter your password.'); return; }
     btn.textContent='…'; btn.disabled=true;
-    apiCall('verifyEmail', {email: email})
+    apiCall('login', {email: email, password: password})
       .then(function(result) {
         btn.textContent='Proceed →'; btn.disabled=false;
-        if (!result.found) { showErr('Email not registered. Please contact the administrator.'); return; }
+        if (!result.found || !result.valid) { showErr('Please check username and password.'); return; }
         proceedToMain(email, result);
       })
       .catch(function() {
@@ -578,6 +583,9 @@
 
   document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('emailInput').addEventListener('keydown', function(e){
+      if (e.key==='Enter') doVerify();
+    });
+    document.getElementById('passwordInput').addEventListener('keydown', function(e){
       if (e.key==='Enter') doVerify();
     });
   });
