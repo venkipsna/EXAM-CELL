@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Exam Duty Registration</title>
+<link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --ink:#1a1a2e;--teal:#0f7173;--teal-light:#e0f4f4;
+    --gold:#e8a838;--surface:#f7f9fb;--card:#fff;
+    --muted:#6b7280;--border:#e2e8f0;--error:#e53e3e;--success:#38a169;
+  }
+  body{
+    font-family:'Josefin Sans',sans-serif;font-size:17px;
+    background:var(--surface);min-height:100vh;
+    display:flex;align-items:flex-start;justify-content:center;padding:36px 10px;
+    background-image:radial-gradient(circle at 15% 20%,rgba(15,113,115,.08) 0%,transparent 50%),
+                     radial-gradient(circle at 85% 80%,rgba(232,168,56,.07) 0%,transparent 50%);
+  }
+  .card{background:var(--card);border-radius:22px;box-shadow:0 8px 40px rgba(0,0,0,.10);width:100%;max-width:1600px;overflow:hidden;animation:slideUp .5s cubic-bezier(.22,.68,0,1.2) both}
+  .layout{display:flex;align-items:stretch}
+  .sidebar{width:190px;flex-shrink:0;background:linear-gradient(180deg,#0f2027 0%,#16213e 100%);padding:22px 12px 30px;border-right:1px solid rgba(255,255,255,.07)}
+  .sidebar-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.10)}
+  .date-list{display:flex;flex-direction:column;gap:5px}
+  .date-pill{font-size:13px;font-weight:700;color:rgba(255,255,255,.78);background:rgba(15,113,115,.18);border:1px solid rgba(15,113,115,.28);border-radius:8px;padding:7px 10px;text-align:center;letter-spacing:.2px;white-space:nowrap;}
+  .sched-group{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
+  .sched-group-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--teal);margin:2px 0 1px}
+  .main-area{flex:1;min-width:0}
+  @keyframes slideUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:none}}
+  @keyframes fadeIn {from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none}}
+  @keyframes spin   {to{transform:rotate(360deg)}}
+
+  .header{background:linear-gradient(135deg,var(--ink) 0%,#16213e 100%);padding:34px 36px 30px;position:relative;overflow:hidden}
+  .header::after {content:'';position:absolute;right:-30px;top:-30px;width:130px;height:130px;border-radius:50%;background:rgba(15,113,115,.25)}
+  .header::before{content:'';position:absolute;right:32px;bottom:-20px;width:80px;height:80px;border-radius:50%;background:rgba(232,168,56,.18)}
+  .header-label{font-size:13px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:8px}
+  .header h1{font-size:30px;font-weight:700;color:#fff;line-height:1.2}
+  .header-sub{font-size:15px;color:rgba(255,255,255,.55);margin-top:6px}
+  .body{padding:24px 18px 30px}
+
+  .st{display:none}.st.on{display:block;animation:fadeIn .3s ease both}
+  .loading{text-align:center;padding:50px 20px}
+  .spinner{width:46px;height:46px;border-radius:50%;border:4px solid var(--border);border-top-color:var(--teal);animation:spin .8s linear infinite;margin:0 auto 16px}
+  .loading p{font-size:15px;color:var(--muted)}
+
+  .login-box{background:var(--surface);border:1.5px solid var(--border);border-radius:16px;padding:28px 24px}
+  .login-title{font-size:16px;font-weight:700;color:var(--ink);margin-bottom:6px}
+  .login-sub{font-size:14px;color:var(--muted);margin-bottom:18px;line-height:1.6}
+  .input-row{display:flex;border:1.5px solid var(--border);border-radius:11px;overflow:hidden;background:#fff;transition:border-color .2s,box-shadow .2s}
+  .input-row:focus-within{border-color:var(--teal);box-shadow:0 0 0 3px rgba(15,113,115,.10)}
+  .input-row input{flex:1;padding:14px 16px;border:none;outline:none;background:transparent;font-family:'Josefin Sans',sans-serif;font-size:16px;color:var(--ink)}
+  .btn-go{padding:14px 28px;background:var(--teal);color:#fff;border:none;font-family:'Josefin Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .2s}
+  .btn-go:hover{background:#0a5a5c}
+  .btn-go:disabled{opacity:.6;cursor:not-allowed}
+  .err{font-size:13px;color:var(--error);margin-top:8px;display:none;padding:9px 12px;background:#fdecea;border-radius:8px;border:1px solid #f5b3b3}
+  .err.show{display:block;animation:fadeIn .2s ease both}
+
+  .screen{text-align:center;padding:36px 16px}
+  .screen .ico{font-size:44px;margin-bottom:14px}
+  .screen h3{font-size:21px;font-weight:700;color:var(--ink);margin-bottom:10px}
+  .screen p{font-size:15px;color:var(--muted);line-height:1.7}
+
+  .vbar{display:flex;align-items:center;gap:12px;background:var(--teal-light);border:1.5px solid var(--teal);border-radius:12px;padding:13px 16px;margin-bottom:16px}
+  .vavatar{width:40px;height:40px;border-radius:50%;background:var(--teal);color:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;flex-shrink:0}
+  .vinfo{flex:1}
+  .vlabel{font-size:11px;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:.5px}
+  .vemail{font-size:15px;font-weight:600;color:var(--ink);margin-top:2px}
+  .vtick{width:26px;height:26px;border-radius:50%;background:var(--success);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+
+  .user-info{background:var(--teal-light);border-radius:12px;padding:16px 18px;margin:0 0 16px;border-left:4px solid var(--teal)}
+  .user-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}
+  .info-label{font-size:12px;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:.5px}
+  .info-value{font-size:16px;font-weight:500;color:var(--ink);margin-top:3px}
+
+  .divider{height:1px;background:var(--border);margin:22px 0}
+  label{display:block;font-size:13px;font-weight:600;letter-spacing:.5px;color:var(--muted);text-transform:uppercase;margin-bottom:7px}
+
+  .slots-heading{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px}
+  .slots-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px}
+  .schedule-header{grid-column:1/-1;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:700;letter-spacing:.5px;color:var(--teal);text-transform:uppercase;margin:14px 0 2px}
+  .schedule-header:first-child{margin-top:0}
+  .schedule-header::after{content:'';flex:1;height:1px;background:var(--border)}
+  .slot-card{border:1.5px solid var(--border);border-radius:14px;padding:12px 10px;transition:border-color .2s,box-shadow .2s;display:flex;flex-direction:column;gap:10px}
+  .slot-card:focus-within{border-color:var(--teal);box-shadow:0 0 0 3px rgba(15,113,115,.08)}
+  .slot-card{border:1.5px solid var(--border);border-radius:14px;padding:14px 8px;transition:border-color .2s,box-shadow .2s;display:flex;flex-direction:column;gap:10px}
+  .slot-top{display:flex;align-items:center;gap:7px}
+  .slot-badge{width:26px;height:26px;border-radius:7px;background:var(--teal);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
+  .slot-lbl{font-size:13px;font-weight:600;color:var(--ink)}
+  .slot-card .field{display:flex;flex-direction:column}
+  .date-wrap{position:relative}
+  .date-wrap select{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:'Josefin Sans',sans-serif;font-size:15px;color:var(--ink);background:var(--surface);cursor:pointer;appearance:none;-webkit-appearance:none}
+  .date-wrap select:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(15,113,115,.10);background:#fff;outline:none}
+  .date-wrap::after{content:'▾';position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:13px;color:var(--muted);pointer-events:none}
+  .sess-btns{display:flex;gap:8px}
+  .sess-btn{flex:1;padding:10px 4px;border:1.5px solid var(--border);border-radius:9px;background:var(--surface);font-family:'Josefin Sans',sans-serif;font-size:15px;font-weight:600;color:var(--muted);cursor:pointer;text-align:center;transition:all .15s}
+  .sess-btn:hover:not(:disabled){border-color:var(--teal);color:var(--teal)}
+  .sess-btn.active-fn{background:#fff8e1;border-color:#e8a838;color:#7a5c00}
+  .sess-btn.active-an{background:#e8f4fd;border-color:#aed6f1;color:#1a5276}
+  .sess-btn:disabled{opacity:.35;cursor:not-allowed}
+  .slot-avail{display:none;align-items:center;gap:6px;padding:8px 10px;border-radius:8px;font-size:13px;font-weight:500;line-height:1.3}
+  .slot-avail.show{display:flex}
+  .slot-avail.ok  {background:#e6f4ea;color:#256029}
+  .slot-avail.warn{background:#fff8e1;color:#7a5c00}
+  .slot-avail.full{background:#fdecea;color:#7b1d1d}
+  .avail-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+  .slot-avail.ok   .avail-dot{background:#38a169}
+  .slot-avail.warn .avail-dot{background:#d69e2e}
+  .slot-avail.full .avail-dot{background:#e53e3e}
+  .dup-warn{display:none;font-size:14px;color:#7a5c00;background:#fff8e1;border:1px solid #f5d97e;border-radius:9px;padding:10px 14px;margin-bottom:12px}
+  .dup-warn.show{display:block;animation:fadeIn .2s ease both}
+  .rdy-status{font-size:13px;color:var(--muted);margin-bottom:10px;min-height:18px}
+  .rdy-status.blocked{color:#b45309}
+  .btn-submit{width:100%;padding:16px;background:linear-gradient(135deg,var(--teal) 0%,#0a5a5c 100%);color:#fff;border:none;border-radius:12px;font-family:'Josefin Sans',sans-serif;font-size:17px;font-weight:600;cursor:pointer;letter-spacing:.5px;transition:opacity .2s,transform .1s,box-shadow .2s;box-shadow:0 4px 14px rgba(15,113,115,.28)}
+  .btn-submit:hover:not(:disabled){opacity:.91}
+  .btn-submit:active:not(:disabled){transform:scale(.98)}
+  .btn-submit:disabled{opacity:.38;cursor:not-allowed;box-shadow:none}
+  .msg{display:none;padding:12px 15px;border-radius:10px;font-size:14px;font-weight:500;margin-top:12px}
+  .msg.show{display:block;animation:fadeIn .3s ease both}
+  .msg.error{background:#fdecea;color:var(--error);border:1px solid #f5b3b3}
+
+  .success-card{display:none;background:linear-gradient(135deg,#e8f5ea,#d4edda);border:1.5px solid #b7dfbe;border-radius:16px;padding:30px 26px;text-align:center}
+  .success-card.show{display:block;animation:fadeIn .4s ease both}
+  .success-icon{width:58px;height:58px;background:var(--success);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:26px}
+  .success-card h2{font-size:24px;font-weight:700;color:var(--ink);margin-bottom:6px}
+  .success-card p{font-size:15px;color:var(--muted);margin-bottom:18px}
+  .conf-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .conf-slot{background:#fff;border-radius:10px;padding:14px 13px;box-shadow:0 2px 8px rgba(0,0,0,.06);text-align:left}
+  .conf-num{font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+  .conf-date{font-size:15px;font-weight:600;color:var(--ink)}
+  .session-pill{display:inline-block;margin-top:5px;padding:3px 11px;border-radius:20px;font-size:13px;font-weight:700}
+  .session-pill.FN{background:#fff8e1;color:#7a5c00;border:1px solid #f5d97e}
+  .session-pill.AN{background:#e8f4fd;color:#1a5276;border:1px solid #aed6f1}
+
+  @media(max-width:900px){.sidebar{width:240px}.date-pill{font-size:11px;padding:4px 5px}}
+  @media(max-width:700px){.layout{flex-direction:column}.sidebar{width:100%;padding:14px 16px}.date-list{flex-direction:row;flex-wrap:wrap;gap:6px}.sched-group{flex-direction:row;flex-wrap:wrap;gap:6px;margin-bottom:6px;align-items:center}.sched-group-label{width:100%;margin:6px 0 0}.slots-grid{grid-template-columns:repeat(4,1fr)}.conf-grid{grid-template-columns:repeat(4,1fr)}.user-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:420px){.slots-grid{grid-template-columns:repeat(2,1fr)}.user-grid{grid-template-columns:1fr}.date-list{flex-direction:row;flex-wrap:wrap}}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <div class="header-label">PSNACET · Exam Cell</div>
+    <h1>Internal Theory Exam Duty Registration</h1>
+  </div>
+  <div class="layout">
+    <div class="sidebar">
+      <div class="sidebar-title">📅 Available Dates</div>
+      <div class="date-list" id="sidebarDates"><div style="font-size:11px;color:rgba(255,255,255,.35)">Loading…</div></div>
+    </div>
+    <div class="main-area">
+  <div class="body">
+
+    <div class="st on" id="stLoad">
+      <div class="loading"><div class="spinner"></div><p>Loading…</p></div>
+    </div>
+
+    <div class="st" id="stLogin">
+      <div class="login-box">
+        <div class="login-title">Enter Your Email ID</div>
+        <div class="login-sub">Use the same email registered with the Exam Cell.</div>
+        <div class="input-row">
+          <input type="email" id="emailInput" placeholder="e.g. XXXXXXXXX@gmail.com" autocomplete="email">
+          <button class="btn-go" id="goBtn" onclick="doVerify()">Proceed →</button>
+        </div>
+        <div class="err" id="errBox"></div>
+      </div>
+    </div>
+
+    <div class="st" id="stDenied">
+      <div class="screen">
+        <div class="ico">🔒</div><h3>Access Denied</h3>
+        <p id="deniedMsg">Your account is not registered.</p>
+      </div>
+    </div>
+
+    <div class="st" id="stMain">
+      <div class="vbar">
+        <div class="vavatar" id="vavatar">?</div>
+        <div class="vinfo">
+          <div class="vlabel">Verified Account</div>
+          <div class="vemail" id="vemail">—</div>
+        </div>
+        <div class="vtick">✓</div>
+      </div>
+
+      <div class="user-info">
+        <div class="user-grid">
+          <div><div class="info-label">Name</div><div class="info-value" id="dispName">—</div></div>
+          <div><div class="info-label">Designation</div><div class="info-value" id="dispDesig">—</div></div>
+          <div><div class="info-label">Department</div><div class="info-value" id="dispDept">—</div></div>
+          <div><div class="info-label">Mobile</div><div class="info-value" id="dispMobile">—</div></div>
+        </div>
+      </div>
+
+      <div id="slotsSection" style="display:none">
+        <div class="divider"></div>
+        <div class="slots-heading" id="slotsHeading">Select Date &amp; Session for All Slots</div>
+        <div class="slots-grid"></div>
+        <div class="dup-warn" id="dupWarn">⚠ Duplicate combination found. Each slot must have a unique date &amp; session.</div>
+        <div class="rdy-status" id="rdyStatus"></div>
+        <button class="btn-submit" id="submitBtn" onclick="submitForm()" disabled>Confirm Registration</button>
+        <div class="msg" id="msgBox"></div>
+      </div>
+
+      <div class="success-card" id="successCard">
+        <div class="success-icon">✓</div>
+        <h2>Registered!</h2>
+        <p id="successSubtext">Your exam duty slots are confirmed.</p>
+        <div class="conf-grid" id="confSlots"></div>
+      </div>
+    </div>
+
+  </div><!-- /body -->
+    </div><!-- /main-area -->
+  </div><!-- /layout -->
+</div>
+<script>
+  // ⚠️ Paste your deployed Apps Script Web App URL here (ends in /exec)
+  const API_URL = 'https://script.google.com/macros/s/AKfycbzBa_DicTNcPf9BoesArQzpDioHlF5Ak7hnquI3qOQkxdvLB6_4jasMiP13Ns2hR1sq/exec';
+
+  // Replaces google.script.run — talks to the Sheet-backed Apps Script API
+  // over plain HTTP so this page can be hosted anywhere (e.g. GitHub Pages).
+  // Content-Type text/plain avoids a CORS preflight, which Apps Script Web
+  // Apps don't handle.
+  function apiCall(action, params) {
+    return fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: action, params: params || {} })
+    }).then(function(res) { return res.json(); });
+  }
+
+  let verifiedEmail='', availableDates=[];
+  let SLOT_COUNT=6;
+  let PER_SCHEDULE=1;
+  let SCHEDULES=['1'];
+  let SCHEDULE_PLAN=[]; // [{schedule, count}] — how SLOT-COUNT is divided across schedules
+  let slotSchedule=[]; // slotSchedule[i] = schedule label that slot i belongs to
+  let SS=[];
+  function buildSS(n){
+    SS=[];
+    for (let i=0;i<n;i++) SS.push({date:'',session:''});
+  }
+  buildSS(SLOT_COUNT);
+
+  function show(id){
+    ['stLoad','stLogin','stDenied','stMain'].forEach(function(s){
+      document.getElementById(s).classList.remove('on');
+    });
+    document.getElementById(id).classList.add('on');
+  }
+
+  window.onload = function() {
+    // Safety timeout — if getConfig takes >8s, show login anyway
+    const timeout = setTimeout(function(){ show('stLogin'); }, 8000);
+
+    apiCall('getConfig').then(function(cfg) {
+        clearTimeout(timeout);
+        availableDates = (cfg && cfg.dateSlots) ? cfg.dateSlots : [];
+        SCHEDULES = (cfg && cfg.schedules && cfg.schedules.length) ? cfg.schedules : ['1'];
+        PER_SCHEDULE = (cfg && cfg.perSchedule) ? cfg.perSchedule : 1;
+        SLOT_COUNT = (cfg && cfg.slotCount) ? cfg.slotCount : (PER_SCHEDULE * SCHEDULES.length);
+        SCHEDULE_PLAN = (cfg && cfg.schedulePlan && cfg.schedulePlan.length) ? cfg.schedulePlan : [{schedule:(SCHEDULES[0]||''), count:SLOT_COUNT}];
+        buildSS(SLOT_COUNT);
+        const slotsHeading = document.getElementById('slotsHeading');
+        if (slotsHeading) {
+          slotsHeading.textContent = SCHEDULE_PLAN.length > 1
+            ? 'Select '+SLOT_COUNT+' Slots Across '+SCHEDULE_PLAN.length+' Schedules'
+            : 'Select Date & Session for All '+SLOT_COUNT+' Slot'+(SLOT_COUNT===1?'':'s');
+        }
+        const successSubtext = document.getElementById('successSubtext');
+        if (successSubtext) successSubtext.textContent = 'Your '+SLOT_COUNT+' exam duty slot'+(SLOT_COUNT===1?'':'s')+' '+(SLOT_COUNT===1?'is':'are')+' confirmed.';
+        // Populate sidebar date list — grouped schedule-wise, with consecutive
+        // dates inside each schedule collapsed into ranges.
+        const sidebarDates = document.getElementById('sidebarDates');
+        function collapseToRanges(dates) {
+          const sorted = dates.slice().sort();
+          const groups = [];
+          let i = 0;
+          while (i < sorted.length) {
+            let j = i;
+            while (j + 1 < sorted.length && isNextDay(sorted[j], sorted[j+1])) j++;
+            groups.push(j > i ? (fmt(sorted[i]) + ' - ' + fmt(sorted[j])) : fmt(sorted[i]));
+            i = j + 1;
+          }
+          return groups;
+        }
+        if (availableDates.length === 0) {
+          sidebarDates.innerHTML='<div style="font-size:11px;color:rgba(255,255,255,.4)">No dates configured</div>';
+        } else {
+          // Bucket dates by schedule (preserving SCHEDULES order); unscheduled
+          // dates fall into a bucket with no label.
+          const bySchedule = {};
+          const unscheduled = [];
+          availableDates.forEach(function(x){
+            if (x.schedule) {
+              if (!bySchedule[x.schedule]) bySchedule[x.schedule] = [];
+              bySchedule[x.schedule].push(x.date);
+            } else {
+              unscheduled.push(x.date);
+            }
+          });
+          const scheduleOrder = (SCHEDULES && SCHEDULES.length) ? SCHEDULES : Object.keys(bySchedule).sort();
+          let html = '';
+          scheduleOrder.forEach(function(sched){
+            if (!bySchedule[sched] || !bySchedule[sched].length) return;
+            const ranges = collapseToRanges(bySchedule[sched]);
+            html += '<div class="sched-group">'
+              + '<div class="sched-group-label">Schedule '+sched+'</div>'
+              + ranges.map(function(g){ return '<div class="date-pill">'+g+'</div>'; }).join('')
+              + '</div>';
+          });
+          if (unscheduled.length) {
+            const ranges = collapseToRanges(unscheduled);
+            html += '<div class="sched-group">'
+              + ranges.map(function(g){ return '<div class="date-pill">'+g+'</div>'; }).join('')
+              + '</div>';
+          }
+          sidebarDates.innerHTML = html || '<div style="font-size:11px;color:rgba(255,255,255,.4)">No dates configured</div>';
+        }
+        const params   = new URLSearchParams(window.location.search);
+        const urlEmail = params.get('email');
+        if (urlEmail && urlEmail.trim() !== '') {
+          autoVerify(urlEmail.trim());
+        } else {
+          show('stLogin');
+        }
+      })
+      .catch(function(err) {
+        clearTimeout(timeout);
+        document.getElementById('sidebarDates').innerHTML='<div style="font-size:11px;color:#f87171">Error: '+(err&&err.message?err.message:'Config load failed')+'</div>';
+        show('stLogin');
+      });
+  };
+
+  function autoVerify(email) {
+    apiCall('verifyEmail', {email: email})
+      .then(function(result) {
+        if (!result.found) {
+          document.getElementById('deniedMsg').innerHTML =
+            'Your account <b>('+email+')</b> is not registered.<br>Please contact the administrator.';
+          show('stDenied'); return;
+        }
+        proceedToMain(email, result);
+      })
+      .catch(function() { show('stLogin'); });
+  }
+
+  function doVerify() {
+    const email = document.getElementById('emailInput').value.trim();
+    const err   = document.getElementById('errBox');
+    const btn   = document.getElementById('goBtn');
+    err.classList.remove('show');
+    if (!email) { showErr('Please enter your email.'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('Please enter a valid email address.'); return; }
+    btn.textContent='…'; btn.disabled=true;
+    apiCall('verifyEmail', {email: email})
+      .then(function(result) {
+        btn.textContent='Proceed →'; btn.disabled=false;
+        if (!result.found) { showErr('Email not registered. Please contact the administrator.'); return; }
+        proceedToMain(email, result);
+      })
+      .catch(function() {
+        btn.textContent='Proceed →'; btn.disabled=false;
+        showErr('Connection error. Please try again.');
+      });
+  }
+
+  function proceedToMain(email, result) {
+    verifiedEmail = email;
+    document.getElementById('vavatar').textContent   = email.charAt(0).toUpperCase();
+    document.getElementById('vemail').textContent    = email;
+    document.getElementById('dispName').textContent  = result.name;
+    document.getElementById('dispDesig').textContent = result.designation;
+    document.getElementById('dispDept').textContent  = result.department;
+    document.getElementById('dispMobile').textContent = result.mobile || '—';
+    show('stMain');
+    apiCall('getUserRegistration', {email: email})
+      .then(function(reg) {
+        if (reg.registered) {
+          showSuccessCard(reg.slots);
+        } else {
+          renderSlotCards();
+          document.getElementById('slotsSection').style.display='block';
+        }
+      })
+      .catch(function() { showMsg('Error checking registration. Please refresh.','error'); });
+  }
+
+  function showErr(msg){ const e=document.getElementById('errBox'); e.textContent=msg; e.classList.add('show'); }
+  function fmt(y){ if(!y)return''; const[yr,m,d]=y.split('-'); return d+'-'+m+'-'+yr; }
+  function isNextDay(a,b){
+    const da=new Date(a), db=new Date(b);
+    da.setDate(da.getDate()+1);
+    return da.toISOString().slice(0,10)===b;
+  }
+
+  function renderSlotCards() {
+    const grid=document.querySelector('.slots-grid'); grid.innerHTML='';
+    slotSchedule=[];
+    let i=0;
+    SCHEDULE_PLAN.forEach(function(plan){
+      const scheduleNo=plan.schedule;
+      if (scheduleNo) {
+        const h=document.createElement('div');
+        h.className='schedule-header';
+        h.textContent='Schedule '+scheduleNo;
+        grid.appendChild(h);
+      }
+
+      for (let k=0; k<plan.count; k++) {
+        const idx=i; // stable copy for this card
+        slotSchedule[idx]=scheduleNo;
+        let opts='<option value="">-- Date --</option>';
+        availableDates.forEach(function(e){
+          if (scheduleNo && e.schedule !== scheduleNo) return;
+          opts+='<option value="'+e.date+'"'+(SS[idx].date===e.date?' selected':'')+'>'+fmt(e.date)+'</option>';
+        });
+        const c=document.createElement('div'); c.className='slot-card'; c.id='card_'+idx;
+        c.innerHTML=
+          '<div class="slot-top"><div class="slot-badge">'+(k+1)+'</div><div class="slot-lbl">Slot '+(k+1)+(scheduleNo?' &middot; Schedule '+scheduleNo:'')+'</div></div>'+
+          '<div class="field"><label>Date</label><div class="date-wrap">'+
+            '<select id="date_'+idx+'" onchange="onDC('+idx+')">'+opts+'</select></div></div>'+
+          '<div class="field"><label>Session</label><div class="sess-btns">'+
+            '<button type="button" class="sess-btn'+(SS[idx].session==='FN'?' active-fn':'')+
+              '" id="bFN_'+idx+'" onclick="onSC('+idx+',\'FN\')">FN</button>'+
+            '<button type="button" class="sess-btn'+(SS[idx].session==='AN'?' active-an':'')+
+              '" id="bAN_'+idx+'" onclick="onSC('+idx+',\'AN\')">AN</button>'+
+          '</div></div>'+
+          '<div class="slot-avail" id="av_'+idx+'"><div class="avail-dot"></div><span id="avt_'+idx+'"></span></div>';
+        grid.appendChild(c);
+        i++;
+      }
+    });
+    updBtns();
+  }
+
+  function onDC(i) {
+    SS[i].date=document.getElementById('date_'+i).value; SS[i].session='';
+    document.getElementById('bFN_'+i).className='sess-btn';
+    document.getElementById('bAN_'+i).className='sess-btn';
+    document.getElementById('av_'+i).classList.remove('show');
+    updBtns(); chkRdy();
+  }
+
+  function onSC(i,s) {
+    if (!SS[i].date) return;
+    SS[i].session=s;
+    document.getElementById('bFN_'+i).className='sess-btn'+(s==='FN'?' active-fn':'');
+    document.getElementById('bAN_'+i).className='sess-btn'+(s==='AN'?' active-an':'');
+    chkAv(i); updBtns(); chkRdy();
+  }
+
+  function updBtns() {
+    for (let i=0; i<SLOT_COUNT; i++) {
+      const md=SS[i].date;
+      const bF=document.getElementById('bFN_'+i), bA=document.getElementById('bAN_'+i);
+      if (!bF||!bA) continue;
+      const en=md ? availableDates.find(function(x){return x.date===md;}) : null;
+      bF.disabled=!md||(en&&en.fnMax===0);
+      bA.disabled=!md||(en&&en.anMax===0);
+      if (!md) continue;
+      let fu=0, au=0;
+      for (let j=0; j<SLOT_COUNT; j++) {
+        if (j===i) continue;
+        if (SS[j].date===md) { if(SS[j].session==='FN')fu++; if(SS[j].session==='AN')au++; }
+      }
+      if (en) { if(fu>=en.fnMax)bF.disabled=true; if(au>=en.anMax)bA.disabled=true; }
+    }
+  }
+
+  function chkAv(i) {
+    const d=SS[i].date, s=SS[i].session;
+    const ae=document.getElementById('av_'+i), at=document.getElementById('avt_'+i);
+    if (!d||!s) { ae.classList.remove('show'); return; }
+    at.textContent='Checking…'; ae.className='slot-avail show ok';
+    const scheduleNo = slotSchedule[i] || '';
+    apiCall('getSlotAvailability', {date: d, session: s, scheduleNo: scheduleNo})
+      .then(function(res) {
+        const info=res.session, schedInfo=res.schedule;
+        let p=0;
+        for (let j=0; j<SLOT_COUNT; j++) if (j!==i&&SS[j].date===d&&SS[j].session===s) p++;
+        const sessRem = info.max-(info.count+p);
+        const schedRem = (schedInfo.max>0) ? (schedInfo.max-schedInfo.count) : Infinity;
+        const rem = Math.min(sessRem, schedRem);
+        const full = rem<=0;
+        ae.className='slot-avail show '+(full?'full':rem<=5?'warn':'ok');
+        if (full) {
+          at.textContent = (schedRem<=0 && sessRem>0) ? 'Schedule full — pick another date' : 'Full — pick another';
+        } else {
+          at.textContent = (isFinite(rem)?rem:sessRem)+' / '+info.max+' remaining';
+        }
+        for (let j=0; j<SLOT_COUNT; j++) if (j!==i&&SS[j].date===d&&SS[j].session===s) chkAv(j);
+        chkRdy();
+      })
+      .catch(function(){ ae.classList.remove('show'); chkRdy(); });
+  }
+
+  function chkRdy() {
+    let ok=true; const seen=new Set(); let dup=false;
+    let filled=0, blockingReason='';
+    for (let i=0; i<SLOT_COUNT; i++) {
+      const d=SS[i].date, s=SS[i].session;
+      if (!d||!s) { ok=false; continue; }
+      filled++;
+      const ae=document.getElementById('av_'+i);
+      if (ae&&ae.classList.contains('full')) {
+        ok=false;
+        if (!blockingReason) blockingReason='Slot '+(i+1)+' ('+fmt(d)+', '+s+') is full — pick another date.';
+      }
+      const k=d+'|'+s;
+      if (seen.has(k)) { dup=true; ok=false; }
+      seen.add(k);
+    }
+    document.getElementById('dupWarn').classList.toggle('show',dup);
+    document.getElementById('submitBtn').disabled=!ok||dup;
+
+    const statusEl=document.getElementById('rdyStatus');
+    if (statusEl) {
+      if (ok && !dup) {
+        statusEl.textContent='All '+SLOT_COUNT+' slots selected — ready to submit.';
+        statusEl.className='rdy-status';
+      } else if (dup) {
+        statusEl.textContent='';
+        statusEl.className='rdy-status';
+      } else if (blockingReason) {
+        statusEl.textContent=blockingReason;
+        statusEl.className='rdy-status blocked';
+      } else {
+        statusEl.textContent=filled+' of '+SLOT_COUNT+' slots selected.';
+        statusEl.className='rdy-status';
+      }
+    }
+  }
+
+  function submitForm() {
+    for (let i=0; i<SLOT_COUNT; i++) {
+      if (!SS[i].date||!SS[i].session) {
+        showMsg('Please complete Slot '+(i+1)+' before submitting.','error');
+        return;
+      }
+    }
+    const slots = SS.map(function(sl){ return {date:sl.date, session:sl.session}; });
+    const btn=document.getElementById('submitBtn');
+    btn.disabled=true; btn.textContent='Registering…';
+    document.getElementById('msgBox').classList.remove('show');
+    apiCall('submitRegistration', {email: verifiedEmail, slots: slots})
+      .then(function(r) {
+        btn.textContent='Confirm Registration';
+        if (r.success) {
+          document.getElementById('slotsSection').style.display='none';
+          showSuccessCard(r.slots);
+        } else {
+          btn.disabled=false; showMsg(r.message,'error');
+        }
+      })
+      .catch(function() {
+        btn.textContent='Confirm Registration'; btn.disabled=false;
+        showMsg('Connection error. Please try again.','error');
+      });
+  }
+
+  function showSuccessCard(slots) {
+    const g=document.getElementById('confSlots'); g.innerHTML='';
+    slots.forEach(function(sl,i) {
+      const d=document.createElement('div'); d.className='conf-slot';
+      d.innerHTML='<div class="conf-num">Slot '+(i+1)+'</div>'+
+        '<div class="conf-date">'+sl.date+'</div>'+
+        '<span class="session-pill '+sl.session+'">'+sl.session+'</span>';
+      g.appendChild(d);
+    });
+    document.getElementById('successCard').classList.add('show');
+  }
+
+  function showMsg(t,type){ const e=document.getElementById('msgBox'); e.textContent=t; e.className='msg show '+type; }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('emailInput').addEventListener('keydown', function(e){
+      if (e.key==='Enter') doVerify();
+    });
+  });
+</script>
+</body>
+</html>
