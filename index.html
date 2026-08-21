@@ -25,8 +25,6 @@
   .sidebar-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.10)}
   .date-list{display:flex;flex-direction:column;gap:5px}
   .date-pill{font-size:13px;font-weight:700;color:rgba(255,255,255,.78);background:rgba(15,113,115,.18);border:1px solid rgba(15,113,115,.28);border-radius:8px;padding:7px 10px;text-align:center;letter-spacing:.2px;white-space:nowrap;}
-  .sched-group{display:flex;flex-direction:column;gap:5px;margin-bottom:10px}
-  .sched-group-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--teal);margin:2px 0 1px}
   .main-area{flex:1;min-width:0}
   @keyframes slideUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:none}}
   @keyframes fadeIn {from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none}}
@@ -134,7 +132,7 @@
   .session-pill.AN{background:#e8f4fd;color:#1a5276;border:1px solid #aed6f1}
 
   @media(max-width:900px){.sidebar{width:240px}.date-pill{font-size:11px;padding:4px 5px}}
-  @media(max-width:700px){.layout{flex-direction:column}.sidebar{width:100%;padding:14px 16px}.date-list{flex-direction:row;flex-wrap:wrap;gap:6px}.sched-group{flex-direction:row;flex-wrap:wrap;gap:6px;margin-bottom:6px;align-items:center}.sched-group-label{width:100%;margin:6px 0 0}.slots-grid{grid-template-columns:repeat(4,1fr)}.conf-grid{grid-template-columns:repeat(4,1fr)}.user-grid{grid-template-columns:1fr 1fr}}
+  @media(max-width:700px){.layout{flex-direction:column}.sidebar{width:100%;padding:14px 16px}.date-list{flex-direction:row;flex-wrap:wrap;gap:6px}.slots-grid{grid-template-columns:repeat(4,1fr)}.conf-grid{grid-template-columns:repeat(4,1fr)}.user-grid{grid-template-columns:1fr 1fr}}
   @media(max-width:420px){.slots-grid{grid-template-columns:repeat(2,1fr)}.user-grid{grid-template-columns:1fr}.date-list{flex-direction:row;flex-wrap:wrap}}
 </style>
 </head>
@@ -158,13 +156,10 @@
 
     <div class="st" id="stLogin">
       <div class="login-box">
-        <div class="login-title">Sign In</div>
-        <div class="login-sub">Enter your registered email ID and password (your mobile number).</div>
-        <div class="input-row" style="margin-bottom:10px">
-          <input type="email" id="emailInput" placeholder="e.g. XXXXXXXXX@gmail.com" autocomplete="email">
-        </div>
+        <div class="login-title">Enter Your Email ID</div>
+        <div class="login-sub">Use the same email registered with the Exam Cell.</div>
         <div class="input-row">
-          <input type="password" id="passwordInput" placeholder="Password (Mobile Number)" autocomplete="current-password">
+          <input type="email" id="emailInput" placeholder="e.g. XXXXXXXXX@gmail.com" autocomplete="email">
           <button class="btn-go" id="goBtn" onclick="doVerify()">Proceed →</button>
         </div>
         <div class="err" id="errBox"></div>
@@ -220,19 +215,19 @@
   </div><!-- /layout -->
 </div>
 <script>
-  // ⚠️ Paste your deployed Apps Script Web App URL here (ends in /exec)
-  const API_URL = 'https://script.google.com/macros/s/AKfycbwJdcqebkoEPbDTcpSFJg5UwHpJ8m1F0E8V0mOnSkTikfBzi2lOYeDvuLBgmoHumARc/exec';
+  // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
+  const API_URL = 'https://script.google.com/macros/s/AKfycbymhVF7HsSt6tfd1Ssd4jPfSyWvXOLE3n8J_7bgIhd5J8ckrnzhvQgaiHHxgdi4Fpuh/exec';
 
-  // Replaces google.script.run — talks to the Sheet-backed Apps Script API
-  // over plain HTTP so this page can be hosted anywhere (e.g. GitHub Pages).
-  // Content-Type text/plain avoids a CORS preflight, which Apps Script Web
-  // Apps don't handle.
-  function apiCall(action, params) {
+  function apiGet(action, params) {
+    const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
+    return fetch(API_URL + '?' + qs).then(function(r){ return r.json(); });
+  }
+  function apiPost(action, payload) {
     return fetch(API_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify({ action: action, params: params || {} })
-    }).then(function(res) { return res.json(); });
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' }, // avoids CORS preflight
+      body: JSON.stringify(Object.assign({ action: action }, payload || {}))
+    }).then(function(r){ return r.json(); });
   }
 
   let verifiedEmail='', availableDates=[];
@@ -259,7 +254,8 @@
     // Safety timeout — if getConfig takes >8s, show login anyway
     const timeout = setTimeout(function(){ show('stLogin'); }, 8000);
 
-    apiCall('getConfig').then(function(cfg) {
+    apiGet('config')
+      .then(function(cfg) {
         clearTimeout(timeout);
         availableDates = (cfg && cfg.dateSlots) ? cfg.dateSlots : [];
         SCHEDULES = (cfg && cfg.schedules && cfg.schedules.length) ? cfg.schedules : ['1'];
@@ -275,53 +271,27 @@
         }
         const successSubtext = document.getElementById('successSubtext');
         if (successSubtext) successSubtext.textContent = 'Your '+SLOT_COUNT+' exam duty slot'+(SLOT_COUNT===1?'':'s')+' '+(SLOT_COUNT===1?'is':'are')+' confirmed.';
-        // Populate sidebar date list — grouped schedule-wise, with consecutive
-        // dates inside each schedule collapsed into ranges.
+        // Populate sidebar date list — group consecutive dates into ranges
         const sidebarDates = document.getElementById('sidebarDates');
-        function collapseToRanges(dates) {
-          const sorted = dates.slice().sort();
-          const groups = [];
-          let i = 0;
-          while (i < sorted.length) {
-            let j = i;
-            while (j + 1 < sorted.length && isNextDay(sorted[j], sorted[j+1])) j++;
-            groups.push(j > i ? (fmt(sorted[i]) + ' - ' + fmt(sorted[j])) : fmt(sorted[i]));
-            i = j + 1;
-          }
-          return groups;
-        }
         if (availableDates.length === 0) {
           sidebarDates.innerHTML='<div style="font-size:11px;color:rgba(255,255,255,.4)">No dates configured</div>';
         } else {
-          // Bucket dates by schedule (preserving SCHEDULES order); unscheduled
-          // dates fall into a bucket with no label.
-          const bySchedule = {};
-          const unscheduled = [];
-          availableDates.forEach(function(x){
-            if (x.schedule) {
-              if (!bySchedule[x.schedule]) bySchedule[x.schedule] = [];
-              bySchedule[x.schedule].push(x.date);
+          const dates = availableDates.map(function(x){ return x.date; }).sort();
+          const groups = [];
+          let i = 0;
+          while (i < dates.length) {
+            let j = i;
+            while (j + 1 < dates.length && isNextDay(dates[j], dates[j+1])) j++;
+            if (j > i) {
+              groups.push(fmt(dates[i]) + ' - ' + fmt(dates[j]));
             } else {
-              unscheduled.push(x.date);
+              groups.push(fmt(dates[i]));
             }
-          });
-          const scheduleOrder = (SCHEDULES && SCHEDULES.length) ? SCHEDULES : Object.keys(bySchedule).sort();
-          let html = '';
-          scheduleOrder.forEach(function(sched){
-            if (!bySchedule[sched] || !bySchedule[sched].length) return;
-            const ranges = collapseToRanges(bySchedule[sched]);
-            html += '<div class="sched-group">'
-              + '<div class="sched-group-label">Schedule '+sched+'</div>'
-              + ranges.map(function(g){ return '<div class="date-pill">'+g+'</div>'; }).join('')
-              + '</div>';
-          });
-          if (unscheduled.length) {
-            const ranges = collapseToRanges(unscheduled);
-            html += '<div class="sched-group">'
-              + ranges.map(function(g){ return '<div class="date-pill">'+g+'</div>'; }).join('')
-              + '</div>';
+            i = j + 1;
           }
-          sidebarDates.innerHTML = html || '<div style="font-size:11px;color:rgba(255,255,255,.4)">No dates configured</div>';
+          sidebarDates.innerHTML = groups.map(function(g){
+            return '<div class="date-pill">'+g+'</div>';
+          }).join('');
         }
         const params   = new URLSearchParams(window.location.search);
         const urlEmail = params.get('email');
@@ -339,7 +309,7 @@
   };
 
   function autoVerify(email) {
-    apiCall('verifyEmail', {email: email})
+    apiGet('verify', {email: email})
       .then(function(result) {
         if (!result.found) {
           document.getElementById('deniedMsg').innerHTML =
@@ -352,19 +322,17 @@
   }
 
   function doVerify() {
-    const email    = document.getElementById('emailInput').value.trim();
-    const password = document.getElementById('passwordInput').value.trim();
+    const email = document.getElementById('emailInput').value.trim();
     const err   = document.getElementById('errBox');
     const btn   = document.getElementById('goBtn');
     err.classList.remove('show');
     if (!email) { showErr('Please enter your email.'); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('Please enter a valid email address.'); return; }
-    if (!password) { showErr('Please enter your password.'); return; }
     btn.textContent='…'; btn.disabled=true;
-    apiCall('login', {email: email, password: password})
+    apiGet('verify', {email: email})
       .then(function(result) {
         btn.textContent='Proceed →'; btn.disabled=false;
-        if (!result.found || !result.valid) { showErr('Please check username and password.'); return; }
+        if (!result.found) { showErr('Email not registered. Please contact the administrator.'); return; }
         proceedToMain(email, result);
       })
       .catch(function() {
@@ -382,7 +350,7 @@
     document.getElementById('dispDept').textContent  = result.department;
     document.getElementById('dispMobile').textContent = result.mobile || '—';
     show('stMain');
-    apiCall('getUserRegistration', {email: email})
+    apiGet('registration', {email: email})
       .then(function(reg) {
         if (reg.registered) {
           showSuccessCard(reg.slots);
@@ -482,7 +450,7 @@
     if (!d||!s) { ae.classList.remove('show'); return; }
     at.textContent='Checking…'; ae.className='slot-avail show ok';
     const scheduleNo = slotSchedule[i] || '';
-    apiCall('getSlotAvailability', {date: d, session: s, scheduleNo: scheduleNo})
+    apiGet('availability', {date: d, session: s, schedule: scheduleNo})
       .then(function(res) {
         const info=res.session, schedInfo=res.schedule;
         let p=0;
@@ -551,7 +519,7 @@
     const btn=document.getElementById('submitBtn');
     btn.disabled=true; btn.textContent='Registering…';
     document.getElementById('msgBox').classList.remove('show');
-    apiCall('submitRegistration', {email: verifiedEmail, slots: slots})
+    apiPost('submit', {email: verifiedEmail, slots: slots})
       .then(function(r) {
         btn.textContent='Confirm Registration';
         if (r.success) {
@@ -583,9 +551,6 @@
 
   document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('emailInput').addEventListener('keydown', function(e){
-      if (e.key==='Enter') doVerify();
-    });
-    document.getElementById('passwordInput').addEventListener('keydown', function(e){
       if (e.key==='Enter') doVerify();
     });
   });
