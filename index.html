@@ -131,6 +131,29 @@
   .session-pill.FN{background:#fff8e1;color:#7a5c00;border:1px solid #f5d97e}
   .session-pill.AN{background:#e8f4fd;color:#1a5276;border:1px solid #aed6f1}
 
+  .alter-row{margin-top:10px}
+  .alter-btn{width:100%;padding:7px 6px;border:1.5px solid var(--teal);border-radius:8px;background:#fff;color:var(--teal);font-family:'Josefin Sans',sans-serif;font-size:12px;font-weight:700;letter-spacing:.3px;cursor:pointer;transition:all .15s}
+  .alter-btn:hover{background:var(--teal-light)}
+  .alter-badge{display:block;width:100%;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;text-align:center;letter-spacing:.2px}
+  .alter-badge.pending{background:#fff8e1;color:#7a5c00;border:1px solid #f5d97e}
+  .alter-badge.accepted{background:#e6f4ea;color:#256029;border:1px solid #b7dfbe}
+
+  .modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,20,30,.55);align-items:center;justify-content:center;z-index:999;padding:16px}
+  .modal-overlay.show{display:flex;animation:fadeIn .2s ease both}
+  .modal-box{background:#fff;border-radius:18px;padding:26px 24px;width:100%;max-width:400px;box-shadow:0 12px 50px rgba(0,0,0,.25)}
+  .modal-box h3{font-size:19px;font-weight:700;color:var(--ink);margin-bottom:4px}
+  .modal-sub{font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.5}
+  .modal-box label{margin-top:14px}
+  .modal-box label:first-of-type{margin-top:0}
+  .modal-select{width:100%;padding:11px 12px;border:1.5px solid var(--border);border-radius:9px;font-family:'Josefin Sans',sans-serif;font-size:15px;color:var(--ink);background:var(--surface)}
+  .modal-select:disabled{opacity:.5;cursor:not-allowed}
+  .modal-btns{display:flex;gap:10px;margin-top:22px}
+  .modal-btns button{flex:1;padding:12px;border-radius:10px;font-family:'Josefin Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--muted)}
+  .modal-btns .btn-primary{border-color:var(--teal);background:var(--teal);color:#fff}
+  .modal-btns .btn-primary:disabled{opacity:.5;cursor:not-allowed}
+  .modal-err{font-size:13px;color:var(--error);margin-top:10px;display:none;padding:9px 12px;background:#fdecea;border-radius:8px;border:1px solid #f5b3b3}
+  .modal-err.show{display:block}
+
   @media(max-width:900px){.sidebar{width:240px}.date-pill{font-size:11px;padding:4px 5px}}
   @media(max-width:700px){.layout{flex-direction:column}.sidebar{width:100%;padding:14px 16px}.date-list{flex-direction:row;flex-wrap:wrap;gap:6px}.slots-grid{grid-template-columns:repeat(4,1fr)}.conf-grid{grid-template-columns:repeat(4,1fr)}.user-grid{grid-template-columns:1fr 1fr}}
   @media(max-width:420px){.slots-grid{grid-template-columns:repeat(2,1fr)}.user-grid{grid-template-columns:1fr}.date-list{flex-direction:row;flex-wrap:wrap}}
@@ -214,9 +237,25 @@
     </div><!-- /main-area -->
   </div><!-- /layout -->
 </div>
+
+<div class="modal-overlay" id="alterOverlay" onclick="if(event.target===this)closeAlterModal()">
+  <div class="modal-box">
+    <h3>Request Duty Alter</h3>
+    <div class="modal-sub" id="alterModalSub">Pick a colleague to take over this slot. They'll get an email to accept or decline.</div>
+    <label>Department</label>
+    <select class="modal-select" id="alterDeptSelect" onchange="onAlterDeptChange()"><option value="">-- Select Department --</option></select>
+    <label>Faculty Name</label>
+    <select class="modal-select" id="alterNameSelect" onchange="onAlterNameChange()" disabled><option value="">-- Select Department First --</option></select>
+    <div class="modal-err" id="alterErr"></div>
+    <div class="modal-btns">
+      <button type="button" onclick="closeAlterModal()">Cancel</button>
+      <button type="button" class="btn-primary" id="alterSubmitBtn" onclick="submitAlterRequest()" disabled>Send Request</button>
+    </div>
+  </div>
+</div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycbymhVF7HsSt6tfd1Ssd4jPfSyWvXOLE3n8J_7bgIhd5J8ckrnzhvQgaiHHxgdi4Fpuh/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxWe1JhiKfNCdZVs2ZrRi_MzIBO-MFu1vz4KGQ3TqwCwDOsoIPVjPu3p5Ib0XTRq1Kf/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
@@ -230,7 +269,7 @@
     }).then(function(r){ return r.json(); });
   }
 
-  let verifiedEmail='', availableDates=[];
+  let verifiedEmail='', verifiedName='', availableDates=[];
   let SLOT_COUNT=6;
   let PER_SCHEDULE=1;
   let SCHEDULES=['1'];
@@ -343,6 +382,7 @@
 
   function proceedToMain(email, result) {
     verifiedEmail = email;
+    verifiedName  = result.name || '';
     document.getElementById('vavatar').textContent   = email.charAt(0).toUpperCase();
     document.getElementById('vemail').textContent    = email;
     document.getElementById('dispName').textContent  = result.name;
@@ -537,14 +577,129 @@
 
   function showSuccessCard(slots) {
     const g=document.getElementById('confSlots'); g.innerHTML='';
+    confSlotsData = slots; // keep for re-render after alter status refresh
     slots.forEach(function(sl,i) {
-      const d=document.createElement('div'); d.className='conf-slot';
+      const d=document.createElement('div'); d.className='conf-slot'; d.id='confSlot_'+i;
       d.innerHTML='<div class="conf-num">Slot '+(i+1)+'</div>'+
         '<div class="conf-date">'+sl.date+'</div>'+
-        '<span class="session-pill '+sl.session+'">'+sl.session+'</span>';
+        '<span class="session-pill '+sl.session+'">'+sl.session+'</span>'+
+        '<div class="alter-row" id="alterRow_'+i+'">'+
+          '<button type="button" class="alter-btn" onclick="openAlterModal('+i+')">Alter</button>'+
+        '</div>';
       g.appendChild(d);
     });
     document.getElementById('successCard').classList.add('show');
+    refreshAlterStatuses();
+  }
+
+  let confSlotsData=[];
+
+  function refreshAlterStatuses() {
+    if (!verifiedEmail || !confSlotsData.length) return;
+    apiGet('alterStatuses', {email: verifiedEmail})
+      .then(function(statuses) {
+        confSlotsData.forEach(function(sl,i) {
+          const row = document.getElementById('alterRow_'+i);
+          if (!row) return;
+          const st = statuses[i];
+          if (st && st.status === 'ACCEPTED') {
+            row.innerHTML = '<span class="alter-badge accepted">✓ Accepted by '+st.altName+'</span>';
+          } else if (st && st.status === 'PENDING') {
+            row.innerHTML = '<span class="alter-badge pending">Alternate Pending</span>';
+          } else {
+            row.innerHTML = '<button type="button" class="alter-btn" onclick="openAlterModal('+i+')">Alter</button>';
+          }
+        });
+      })
+      .catch(function(){ /* leave default Alter buttons if this fails */ });
+  }
+
+  // ── Alter modal ──
+  let alterSlotIndex=-1;
+  function openAlterModal(i) {
+    alterSlotIndex = i;
+    const sl = confSlotsData[i];
+    document.getElementById('alterModalSub').textContent =
+      'Slot '+(i+1)+' — '+sl.date+' ('+sl.session+'). Pick a colleague to take over. They\'ll get an email to accept or decline.';
+    const deptSel = document.getElementById('alterDeptSelect');
+    const nameSel = document.getElementById('alterNameSelect');
+    deptSel.innerHTML = '<option value="">Loading…</option>';
+    nameSel.innerHTML = '<option value="">-- Select Department First --</option>';
+    nameSel.disabled = true;
+    document.getElementById('alterErr').classList.remove('show');
+    document.getElementById('alterSubmitBtn').disabled = true;
+    document.getElementById('alterOverlay').classList.add('show');
+    apiGet('departments')
+      .then(function(depts) {
+        deptSel.innerHTML = '<option value="">-- Select Department --</option>' +
+          depts.map(function(d){ return '<option value="'+d+'">'+d+'</option>'; }).join('');
+      })
+      .catch(function(){ deptSel.innerHTML = '<option value="">-- Error loading --</option>'; });
+  }
+
+  function closeAlterModal() {
+    document.getElementById('alterOverlay').classList.remove('show');
+    alterSlotIndex = -1;
+  }
+
+  function onAlterDeptChange() {
+    const dept = document.getElementById('alterDeptSelect').value;
+    const nameSel = document.getElementById('alterNameSelect');
+    document.getElementById('alterSubmitBtn').disabled = true;
+    if (!dept) { nameSel.innerHTML = '<option value="">-- Select Department First --</option>'; nameSel.disabled = true; return; }
+    nameSel.innerHTML = '<option value="">Loading…</option>'; nameSel.disabled = true;
+    apiGet('facultyByDept', {dept: dept, email: verifiedEmail})
+      .then(function(list) {
+        if (!list.length) { nameSel.innerHTML = '<option value="">No other faculty in this department</option>'; return; }
+        nameSel.innerHTML = '<option value="">-- Select Faculty --</option>' +
+          list.map(function(f){ return '<option value="'+f.email+'" data-name="'+f.name+'">'+f.name+'</option>'; }).join('');
+        nameSel.disabled = false;
+      })
+      .catch(function(){ nameSel.innerHTML = '<option value="">-- Error loading --</option>'; });
+  }
+
+  function onAlterNameChange() {
+    const nameSel = document.getElementById('alterNameSelect');
+    document.getElementById('alterSubmitBtn').disabled = !nameSel.value;
+  }
+
+  function submitAlterRequest() {
+    if (alterSlotIndex < 0) return;
+    const sl = confSlotsData[alterSlotIndex];
+    const deptSel = document.getElementById('alterDeptSelect');
+    const nameSel = document.getElementById('alterNameSelect');
+    const altEmail = nameSel.value;
+    const altName = nameSel.selectedOptions[0] ? nameSel.selectedOptions[0].getAttribute('data-name') : '';
+    const errEl = document.getElementById('alterErr');
+    errEl.classList.remove('show');
+    if (!altEmail) return;
+    const btn = document.getElementById('alterSubmitBtn');
+    btn.disabled = true; btn.textContent = 'Sending…';
+    // sl.date is shown as DD-MM-YYYY on the confirmation card — convert back to YYYY-MM-DD for the API
+    const parts = sl.date.split('-');
+    const ymd = parts.length===3 ? (parts[2]+'-'+parts[1]+'-'+parts[0]) : sl.date;
+    apiPost('requestAlter', {
+      email: verifiedEmail,
+      slotIndex: alterSlotIndex,
+      date: ymd,
+      session: sl.session,
+      altEmail: altEmail,
+      altName: altName,
+      altDept: deptSel.value
+    }).then(function(r) {
+      btn.textContent = 'Send Request'; btn.disabled = false;
+      if (r.success) {
+        closeAlterModal();
+        refreshAlterStatuses();
+      } else {
+        errEl.textContent = r.message || 'Could not send the request.';
+        errEl.classList.add('show');
+      }
+    }).catch(function() {
+      btn.textContent = 'Send Request'; btn.disabled = false;
+      errEl.textContent = 'Connection error. Please try again.';
+      errEl.classList.add('show');
+    });
   }
 
   function showMsg(t,type){ const e=document.getElementById('msgBox'); e.textContent=t; e.className='msg show '+type; }
