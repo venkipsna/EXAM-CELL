@@ -24,6 +24,9 @@
   .sidebar{width:190px;flex-shrink:0;background:linear-gradient(180deg,#0f2027 0%,#16213e 100%);padding:22px 12px 30px;border-right:1px solid rgba(255,255,255,.07)}
   .sidebar-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.10)}
   .date-list{display:flex;flex-direction:column;gap:5px}
+  .sched-group{margin-bottom:10px}
+  .sched-group:last-child{margin-bottom:0}
+  .sched-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:5px}
   .date-pill{font-size:13px;font-weight:700;color:rgba(255,255,255,.78);background:rgba(15,113,115,.18);border:1px solid rgba(15,113,115,.28);border-radius:8px;padding:7px 10px;text-align:center;letter-spacing:.2px;white-space:nowrap;}
   .main-area{flex:1;min-width:0}
   @keyframes slideUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:none}}
@@ -257,7 +260,7 @@
 </div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycbxU5g7WOn2WHxEIQR9C9GVlKdwjCfVujXGPEtNZZiBV0gziauxl4sCHg-Ow0hWq_QFK/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwYX-1KW45JAF_qcuxsvaXkEfkgqMvuFlKiCn8C2UjPW9GCuBWDYgx2sCec0mXv-Jgy/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
@@ -312,27 +315,41 @@
         }
         const successSubtext = document.getElementById('successSubtext');
         if (successSubtext) successSubtext.textContent = 'Your '+SLOT_COUNT+' exam duty slot'+(SLOT_COUNT===1?'':'s')+' '+(SLOT_COUNT===1?'is':'are')+' confirmed.';
-        // Populate sidebar date list — group consecutive dates into ranges
+        // Populate sidebar date list — grouped by schedule, consecutive dates collapsed into ranges
         const sidebarDates = document.getElementById('sidebarDates');
+        const scheduleDates = (cfg && cfg.scheduleDates) || null;
         if (availableDates.length === 0) {
           sidebarDates.innerHTML='<div style="font-size:11px;color:rgba(255,255,255,.4)">No dates configured</div>';
         } else {
-          const dates = availableDates.map(function(x){ return x.date; }).sort();
-          const groups = [];
-          let i = 0;
-          while (i < dates.length) {
-            let j = i;
-            while (j + 1 < dates.length && isNextDay(dates[j], dates[j+1])) j++;
-            if (j > i) {
-              groups.push(fmt(dates[i]) + ' - ' + fmt(dates[j]));
-            } else {
-              groups.push(fmt(dates[i]));
+          function rangesFor(dateList) {
+            const dates = dateList.slice().sort();
+            const groups = [];
+            let i = 0;
+            while (i < dates.length) {
+              let j = i;
+              while (j + 1 < dates.length && isNextDay(dates[j], dates[j+1])) j++;
+              groups.push(j > i ? (fmt(dates[i]) + ' - ' + fmt(dates[j])) : fmt(dates[i]));
+              i = j + 1;
             }
-            i = j + 1;
+            return groups;
           }
-          sidebarDates.innerHTML = groups.map(function(g){
-            return '<div class="date-pill">'+g+'</div>';
-          }).join('');
+          if (scheduleDates && Object.keys(scheduleDates).length > 1) {
+            const schedLabels = Object.keys(scheduleDates).sort(function(a,b){
+              const na=parseFloat(a), nb=parseFloat(b);
+              return (!isNaN(na)&&!isNaN(nb)) ? na-nb : a.localeCompare(b);
+            });
+            sidebarDates.innerHTML = schedLabels.map(function(label){
+              const pills = rangesFor(scheduleDates[label]).map(function(g){
+                return '<div class="date-pill">'+g+'</div>';
+              }).join('');
+              return '<div class="sched-group"><div class="sched-label">Schedule '+label+'</div>'+pills+'</div>';
+            }).join('');
+          } else {
+            const dates = availableDates.map(function(x){ return x.date; });
+            sidebarDates.innerHTML = rangesFor(dates).map(function(g){
+              return '<div class="date-pill">'+g+'</div>';
+            }).join('');
+          }
         }
         const params   = new URLSearchParams(window.location.search);
         const urlEmail = params.get('email');
