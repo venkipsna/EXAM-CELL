@@ -69,6 +69,8 @@
   .vlabel{font-size:11px;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:.5px}
   .vemail{font-size:15px;font-weight:600;color:var(--ink);margin-top:2px}
   .vtick{width:26px;height:26px;border-radius:50%;background:var(--success);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+  .signout-btn{border:1.5px solid var(--teal);background:#fff;color:var(--teal);font-family:'Josefin Sans',sans-serif;font-size:12px;font-weight:700;letter-spacing:.3px;border-radius:8px;padding:8px 14px;cursor:pointer;flex-shrink:0;transition:all .15s}
+  .signout-btn:hover{background:var(--teal-light)}
 
   .user-info{background:var(--teal-light);border-radius:12px;padding:16px 18px;margin:0 0 16px;border-left:4px solid var(--teal)}
   .user-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}
@@ -209,6 +211,7 @@
           <div class="vemail" id="vemail">—</div>
         </div>
         <div class="vtick">✓</div>
+        <button type="button" class="signout-btn" onclick="signOut()">Sign Out</button>
       </div>
 
       <div class="user-info">
@@ -260,7 +263,7 @@
 </div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycbxw0apbmkFyj_KK5405MPb6T7tEkos5HeMV3nQZwC_KsQg4Rfki4sB0JaV4E3ty4bsg/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbztzAy6_Vg7r-dbZXrT7KSVeqUC9RNiB3XlhkMmI5KdKeIps8iDCG_MK6ex-W6rRBV9/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
@@ -353,8 +356,11 @@
         }
         const params   = new URLSearchParams(window.location.search);
         const urlEmail = params.get('email');
+        const savedEmail = (function(){ try { return localStorage.getItem('examDutyEmail') || ''; } catch(e){ return ''; } })();
         if (urlEmail && urlEmail.trim() !== '') {
           autoVerify(urlEmail.trim());
+        } else if (savedEmail) {
+          autoVerify(savedEmail);
         } else {
           show('stLogin');
         }
@@ -370,6 +376,7 @@
     apiGet('verify', {email: email})
       .then(function(result) {
         if (!result.found) {
+          try { localStorage.removeItem('examDutyEmail'); } catch(e){}
           document.getElementById('deniedMsg').innerHTML =
             'Your account <b>('+email+')</b> is not registered.<br>Please contact the administrator.';
           show('stDenied'); return;
@@ -377,6 +384,19 @@
         proceedToMain(email, result);
       })
       .catch(function() { show('stLogin'); });
+  }
+
+  function signOut() {
+    try { localStorage.removeItem('examDutyEmail'); } catch(e){}
+    verifiedEmail = ''; verifiedName = '';
+    // Strip ?email= from the URL so a personal link doesn't auto-relogin on refresh
+    if (new URLSearchParams(window.location.search).get('email')) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('email');
+      window.history.replaceState({}, '', url.toString());
+    }
+    document.getElementById('emailInput').value = '';
+    show('stLogin');
   }
 
   function doVerify() {
@@ -402,6 +422,7 @@
   function proceedToMain(email, result) {
     verifiedEmail = email;
     verifiedName  = result.name || '';
+    try { localStorage.setItem('examDutyEmail', email); } catch(e){}
     document.getElementById('vavatar').textContent   = email.charAt(0).toUpperCase();
     document.getElementById('vemail').textContent    = email;
     document.getElementById('dispName').textContent  = result.name;
