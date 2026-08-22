@@ -135,8 +135,9 @@
   .alter-btn{width:100%;padding:7px 6px;border:1.5px solid var(--teal);border-radius:8px;background:#fff;color:var(--teal);font-family:'Josefin Sans',sans-serif;font-size:12px;font-weight:700;letter-spacing:.3px;cursor:pointer;transition:all .15s}
   .alter-btn:hover{background:var(--teal-light)}
   .alter-badge{display:block;width:100%;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;text-align:center;letter-spacing:.2px}
-  .alter-badge.pending{background:#fff8e1;color:#7a5c00;border:1px solid #f5d97e}
+  .alter-badge.pending{background:#fff8e1;color:#7a5c00;border:1px solid #f5d97e;animation:pendingBlink 1.2s ease-in-out infinite}
   .alter-badge.accepted{background:#e6f4ea;color:#256029;border:1px solid #b7dfbe}
+  @keyframes pendingBlink{0%,100%{opacity:1}50%{opacity:.45}}
 
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,20,30,.55);align-items:center;justify-content:center;z-index:999;padding:16px}
   .modal-overlay.show{display:flex;animation:fadeIn .2s ease both}
@@ -255,7 +256,7 @@
 </div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycbzTWX7jxd90Pa1C2CbwcBSQMShTfaI5_iGnOw-85-Rc0_2gD4DLHDlze_rvP7d7O7OT/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbyaDQMd9GZDFKjL3p5gz5EbnTZs-1BXyEKclptmEgCLISHtnIh-53wGFrV65lY32PO8/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
