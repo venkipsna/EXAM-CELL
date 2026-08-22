@@ -137,6 +137,7 @@
   .alter-badge{display:block;width:100%;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;text-align:center;letter-spacing:.2px}
   .alter-badge.pending{background:#fff8e1;color:#7a5c00;border:1px solid #f5d97e;animation:pendingBlink 1.2s ease-in-out infinite}
   .alter-badge.accepted{background:#e6f4ea;color:#256029;border:1px solid #b7dfbe}
+  .alter-badge.rejected{background:#fdecea;color:#a13a2f;border:1px solid #f2b8ae;margin-bottom:6px}
   @keyframes pendingBlink{0%,100%{opacity:1}50%{opacity:.45}}
 
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,20,30,.55);align-items:center;justify-content:center;z-index:999;padding:16px}
@@ -607,6 +608,9 @@
             row.innerHTML = '<span class="alter-badge accepted">✓ Accepted by '+st.altName+'</span>';
           } else if (st && st.status === 'PENDING') {
             row.innerHTML = '<span class="alter-badge pending">Alternate Pending</span>';
+          } else if (st && st.status === 'REJECTED') {
+            row.innerHTML = '<span class="alter-badge rejected">✗ Declined by '+st.altName+'</span>'+
+              '<button type="button" class="alter-btn" onclick="openAlterModal('+i+')">Alter</button>';
           } else {
             row.innerHTML = '<button type="button" class="alter-btn" onclick="openAlterModal('+i+')">Alter</button>';
           }
