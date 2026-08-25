@@ -135,6 +135,8 @@
   .session-pill{display:inline-block;margin-top:5px;padding:3px 11px;border-radius:20px;font-size:13px;font-weight:700}
   .session-pill.FN{background:#fff8e1;color:#7a5c00;border:1px solid #f5d97e}
   .session-pill.AN{background:#e8f4fd;color:#1a5276;border:1px solid #aed6f1}
+  .taken-from{font-size:11px;color:#8a8f98;margin-top:8px;line-height:1.4}
+  .taken-from b{color:#5c6068}
 
   .alter-row{margin-top:10px}
   .alter-btn{width:100%;padding:7px 6px;border:1.5px solid var(--teal);border-radius:8px;background:#fff;color:var(--teal);font-family:'Josefin Sans',sans-serif;font-size:12px;font-weight:700;letter-spacing:.3px;cursor:pointer;transition:all .15s}
@@ -245,6 +247,11 @@
         <p id="successSubtext">Your exam duty slots are confirmed.</p>
         <div class="conf-grid" id="confSlots"></div>
       </div>
+
+      <div id="alteredDetailsSection" style="display:none;margin-top:22px">
+        <h3 style="text-align:center;font-size:18px;font-weight:700;color:var(--ink);margin-bottom:14px">Altered Details</h3>
+        <div class="conf-grid" id="alteredDetailsGrid"></div>
+      </div>
     </div>
 
   </div><!-- /body -->
@@ -269,7 +276,7 @@
 </div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycbzkutIt2qZZUxEvEMSdqhTEcsw2X1WFK-KcLuV-CcWpp0NnzYVbFdI7Zj_MQv0k-Wgs/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwuSr493VxVUZUNGa71cuGFP-yjsWKQN1zu0rXBbmBFr2LIf11Wdt5Qar-kO5vuGub5/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
@@ -655,6 +662,27 @@
     });
     document.getElementById('successCard').classList.add('show');
     refreshAlterStatuses();
+    loadAlteredDuties();
+  }
+
+  function loadAlteredDuties() {
+    if (!verifiedEmail) return;
+    apiGet('alteredDuties', {email: verifiedEmail})
+      .then(function(duties) {
+        const section = document.getElementById('alteredDetailsSection');
+        const grid = document.getElementById('alteredDetailsGrid');
+        if (!duties || !duties.length) { section.style.display='none'; return; }
+        grid.innerHTML = duties.map(function(d,i){
+          return '<div class="conf-slot">'+
+            '<div class="conf-num">Taken Over</div>'+
+            '<div class="conf-date">'+fmt(d.date)+'</div>'+
+            '<span class="session-pill '+d.session+'">'+d.session+'</span>'+
+            '<div class="taken-from">From <b>'+d.reqName+'</b>'+(d.respondedAt?'<br>Accepted on '+formatDT(d.respondedAt):'')+'</div>'+
+          '</div>';
+        }).join('');
+        section.style.display='block';
+      })
+      .catch(function(){ /* leave section hidden if this fails */ });
   }
 
   let confSlotsData=[];
