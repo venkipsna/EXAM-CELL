@@ -276,7 +276,7 @@
 </div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycbxuRRhAqs5GstygOQNNs2vmNPjVNF7c9qEFbFJ6DxH9uAsotvZa7Jp_6J49zG6RgSWX/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwfxwVpNU7Eci8ypq2cPf8fF9T3SV196lCTDXGDfjyNLjnhD4P4IA43kb1pZGA5xvld/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
@@ -654,8 +654,8 @@
     slots.forEach(function(sl,i) {
       const d=document.createElement('div'); d.className='conf-slot'; d.id='confSlot_'+i;
       d.innerHTML='<div class="conf-num">Slot '+(i+1)+'</div>'+
-        '<div class="conf-date">'+sl.date+'</div>'+
-        '<span class="session-pill '+sl.session+'">'+sl.session+'</span>'+
+        '<div class="conf-date">'+(sl.date || '—')+'</div>'+
+        '<span class="session-pill '+sl.session+'">'+(sl.session || '')+'</span>'+
         '<div class="alter-row" id="alterRow_'+i+'">'+
           '<button type="button" class="alter-btn" onclick="openAlterModal('+i+')">Alter</button>'+
         '</div>';
