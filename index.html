@@ -141,6 +141,7 @@
   .alter-btn:hover{background:var(--teal-light)}
   .alter-detail{font-size:10.5px;color:#8a8f98;line-height:1.5;text-align:center;margin-top:5px}
   .alter-detail b{color:#5c6068}
+  .alter-detail-heading{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--teal);text-align:center;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)}
   .alter-badge{display:block;width:100%;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;text-align:center;letter-spacing:.2px}
   .alter-badge.pending{background:#fff8e1;color:#7a5c00;border:1px solid #f5d97e;animation:pendingBlink 1s ease-in-out infinite}
   .alter-badge.accepted{background:#e6f4ea;color:#256029;border:1px solid #b7dfbe}
@@ -678,14 +679,17 @@
           const st = statuses[i];
           if (st && st.status === 'ACCEPTED') {
             row.innerHTML = '<span class="alter-badge accepted">✓ Accepted by '+st.altName+'</span>'+
+              '<div class="alter-detail-heading">Alter Details</div>'+
               '<div class="alter-detail"><b>'+st.altName+'</b>'+(st.altDept?' · '+st.altDept:'')+'<br>'+
               (st.altEmail||'')+(st.respondedAt?'<br>Accepted on '+formatDT(st.respondedAt):'')+'</div>';
           } else if (st && st.status === 'PENDING') {
             row.innerHTML = '<span class="alter-badge pending">Alternate Pending</span>'+
+              '<div class="alter-detail-heading">Alter Details</div>'+
               '<div class="alter-detail">Requested to <b>'+st.altName+'</b>'+(st.altDept?' · '+st.altDept:'')+
               (st.requestedAt?'<br>Sent on '+formatDT(st.requestedAt):'')+'</div>';
           } else if (st && st.status === 'REJECTED') {
             row.innerHTML = '<span class="alter-badge rejected">✗ Declined by '+st.altName+'</span>'+
+              '<div class="alter-detail-heading">Alter Details</div>'+
               '<div class="alter-detail">'+(st.respondedAt?'Declined on '+formatDT(st.respondedAt):'')+'</div>'+
               '<button type="button" class="alter-btn" onclick="openAlterModal('+i+')">Alter</button>';
           } else {
