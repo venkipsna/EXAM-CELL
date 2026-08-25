@@ -469,6 +469,7 @@
         } else {
           renderSlotCards();
           document.getElementById('slotsSection').style.display='block';
+          loadAlteredDuties();
         }
       })
       .catch(function() { showMsg('Error checking registration. Please refresh.','error'); });
