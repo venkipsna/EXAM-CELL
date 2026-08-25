@@ -139,6 +139,8 @@
   .alter-row{margin-top:10px}
   .alter-btn{width:100%;padding:7px 6px;border:1.5px solid var(--teal);border-radius:8px;background:#fff;color:var(--teal);font-family:'Josefin Sans',sans-serif;font-size:12px;font-weight:700;letter-spacing:.3px;cursor:pointer;transition:all .15s}
   .alter-btn:hover{background:var(--teal-light)}
+  .alter-detail{font-size:10.5px;color:#8a8f98;line-height:1.5;text-align:center;margin-top:5px}
+  .alter-detail b{color:#5c6068}
   .alter-badge{display:block;width:100%;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;text-align:center;letter-spacing:.2px}
   .alter-badge.pending{background:#fff8e1;color:#7a5c00;border:1px solid #f5d97e;animation:pendingBlink 1s ease-in-out infinite}
   .alter-badge.accepted{background:#e6f4ea;color:#256029;border:1px solid #b7dfbe}
@@ -266,7 +268,7 @@
 </div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycbwQk8YVVIkIuHzb6XXIP8aJbVqQCJpZdj8YMfBji_EnZxOIuPQD7E2QMmKyJfT039ot/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbzkutIt2qZZUxEvEMSdqhTEcsw2X1WFK-KcLuV-CcWpp0NnzYVbFdI7Zj_MQv0k-Wgs/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
@@ -656,6 +658,16 @@
 
   let confSlotsData=[];
 
+  function formatDT(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    const dd = String(d.getDate()).padStart(2,'0'), mm = String(d.getMonth()+1).padStart(2,'0'), yy = d.getFullYear();
+    let h = d.getHours(), mi = String(d.getMinutes()).padStart(2,'0');
+    const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12; if (h === 0) h = 12;
+    return dd+'-'+mm+'-'+yy+', '+h+':'+mi+' '+ap;
+  }
+
   function refreshAlterStatuses() {
     if (!verifiedEmail || !confSlotsData.length) return;
     apiGet('alterStatuses', {email: verifiedEmail})
@@ -665,11 +677,16 @@
           if (!row) return;
           const st = statuses[i];
           if (st && st.status === 'ACCEPTED') {
-            row.innerHTML = '<span class="alter-badge accepted">✓ Accepted by '+st.altName+'</span>';
+            row.innerHTML = '<span class="alter-badge accepted">✓ Accepted by '+st.altName+'</span>'+
+              '<div class="alter-detail"><b>'+st.altName+'</b>'+(st.altDept?' · '+st.altDept:'')+'<br>'+
+              (st.altEmail||'')+(st.respondedAt?'<br>Accepted on '+formatDT(st.respondedAt):'')+'</div>';
           } else if (st && st.status === 'PENDING') {
-            row.innerHTML = '<span class="alter-badge pending">Alternate Pending</span>';
+            row.innerHTML = '<span class="alter-badge pending">Alternate Pending</span>'+
+              '<div class="alter-detail">Requested to <b>'+st.altName+'</b>'+(st.altDept?' · '+st.altDept:'')+
+              (st.requestedAt?'<br>Sent on '+formatDT(st.requestedAt):'')+'</div>';
           } else if (st && st.status === 'REJECTED') {
             row.innerHTML = '<span class="alter-badge rejected">✗ Declined by '+st.altName+'</span>'+
+              '<div class="alter-detail">'+(st.respondedAt?'Declined on '+formatDT(st.respondedAt):'')+'</div>'+
               '<button type="button" class="alter-btn" onclick="openAlterModal('+i+')">Alter</button>';
           } else {
             row.innerHTML = '<button type="button" class="alter-btn" onclick="openAlterModal('+i+')">Alter</button>';
