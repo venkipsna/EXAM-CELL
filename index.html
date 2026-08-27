@@ -192,12 +192,12 @@
     <div class="st" id="stLogin">
       <div class="login-box">
         <div class="login-title">Sign In</div>
-        <div class="login-sub">Use your registered email and mobile number as password.</div>
+        <div class="login-sub">Use your registered email and password.</div>
         <div class="input-row" style="margin-bottom:10px">
           <input type="email" id="emailInput" placeholder="e.g. XXXXXXXXX@gmail.com" autocomplete="email">
         </div>
         <div class="input-row">
-          <input type="password" id="passwordInput" placeholder="Mobile number" autocomplete="current-password" inputmode="numeric">
+          <input type="password" id="passwordInput" placeholder="Password" autocomplete="current-password">
         </div>
         <button class="btn-go" id="goBtn" style="width:100%;margin-top:12px;border-radius:11px" onclick="doVerify()">Proceed →</button>
         <div class="err" id="errBox"></div>
@@ -276,7 +276,7 @@
 </div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycbwfxwVpNU7Eci8ypq2cPf8fF9T3SV196lCTDXGDfjyNLjnhD4P4IA43kb1pZGA5xvld/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbyEr-nSSxgjE2dCz-5CKGwoTyRP8Xm1ClaPEe8-NY8GKrpTN3KCeuaTDAlCcnQlYup0/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
@@ -435,13 +435,13 @@
     err.classList.remove('show');
     if (!email) { showErr('Please enter your email.'); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('Please enter a valid email address.'); return; }
-    if (!password) { showErr('Please enter your mobile number as password.'); return; }
+    if (!password) { showErr('Please enter your password.'); return; }
     btn.textContent='…'; btn.disabled=true;
     apiGet('verify', {email: email, password: password})
       .then(function(result) {
         btn.textContent='Proceed →'; btn.disabled=false;
         if (!result.found) { showErr('Email not registered. Please contact the administrator.'); return; }
-        if (result.authFailed) { showErr('Incorrect password. Please enter your registered mobile number.'); return; }
+        if (result.authFailed) { showErr('Incorrect password.'); return; }
         try { localStorage.setItem('examDutyPassword', password); } catch(e){}
         proceedToMain(email, result);
       })
