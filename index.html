@@ -295,7 +295,7 @@
 </div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycbzzZRu4iZm_UUIdbxeOVzRc-BNkGPipJ3dwZUP5Jo2821T5hLg_YhzIKxQevq5hFNk-/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwf9EFwZaSt8-KmYlQn2Hd9zFC0YsRFD29-cu_gUUTi0ASRvmAKMPtJL0Vf2ntmHgtQ/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
@@ -724,7 +724,7 @@
         confSlotsData.forEach(function(sl,i) {
           const row = document.getElementById('alterRow_'+i);
           if (!row) return;
-          const st = statuses[i];
+          const st = statuses[sl.col];
           if (st && st.status === 'ACCEPTED') {
             row.innerHTML = '<span class="alter-badge accepted">✓ Accepted by '+st.altName+'</span>'+
               '<div class="alter-detail-heading">Alter Details</div>'+
@@ -858,7 +858,7 @@
     const ymd = parts.length===3 ? (parts[2]+'-'+parts[1]+'-'+parts[0]) : sl.date;
     apiPost('requestAlter', {
       email: verifiedEmail,
-      slotIndex: alterSlotIndex,
+      slotIndex: sl.col,
       date: ymd,
       session: sl.session,
       altEmail: altEmail,
