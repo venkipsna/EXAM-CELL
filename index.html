@@ -295,7 +295,7 @@
 </div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycbwf9EFwZaSt8-KmYlQn2Hd9zFC0YsRFD29-cu_gUUTi0ASRvmAKMPtJL0Vf2ntmHgtQ/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbx3XU70v4VLldyy6ee_DBgMemBjO7AlelbJ6bEx-ihvYJijTaOHmMSQ9vSeaDHitAFK/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
@@ -315,6 +315,7 @@
   let SCHEDULES=['1'];
   let SCHEDULE_PLAN=[]; // [{schedule, count}] — how SLOT-COUNT is divided across schedules
   let slotSchedule=[]; // slotSchedule[i] = schedule label that slot i belongs to
+  let sessionSchedule={}; // "date|session" -> schedule label
   let SS=[];
   function buildSS(n){
     SS=[];
@@ -337,6 +338,7 @@
       .then(function(cfg) {
         clearTimeout(timeout);
         availableDates = (cfg && cfg.dateSlots) ? cfg.dateSlots : [];
+        sessionSchedule = (cfg && cfg.sessionSchedule) || {};
         SCHEDULES = (cfg && cfg.schedules && cfg.schedules.length) ? cfg.schedules : ['1'];
         PER_SCHEDULE = (cfg && cfg.perSchedule) ? cfg.perSchedule : 1;
         SLOT_COUNT = (cfg && cfg.slotCount) ? cfg.slotCount : (PER_SCHEDULE * SCHEDULES.length);
@@ -520,7 +522,11 @@
         slotSchedule[idx]=scheduleNo;
         let opts='<option value="">-- Date --</option>';
         availableDates.forEach(function(e){
-          if (scheduleNo && e.schedule !== scheduleNo) return;
+          if (scheduleNo) {
+            const fnMatches = sessionSchedule[e.date+'|FN'] === scheduleNo;
+            const anMatches = sessionSchedule[e.date+'|AN'] === scheduleNo;
+            if (!fnMatches && !anMatches) return;
+          }
           opts+='<option value="'+e.date+'"'+(SS[idx].date===e.date?' selected':'')+'>'+fmt(e.date)+'</option>';
         });
         const c=document.createElement('div'); c.className='slot-card'; c.id='card_'+idx;
@@ -566,6 +572,11 @@
       const en=md ? availableDates.find(function(x){return x.date===md;}) : null;
       bF.disabled=!md||(en&&en.fnMax===0);
       bA.disabled=!md||(en&&en.anMax===0);
+      const scheduleNo = slotSchedule[i] || '';
+      if (md && scheduleNo) {
+        if (sessionSchedule[md+'|FN'] !== scheduleNo) bF.disabled = true;
+        if (sessionSchedule[md+'|AN'] !== scheduleNo) bA.disabled = true;
+      }
       if (!md) continue;
       let fu=0, au=0;
       for (let j=0; j<SLOT_COUNT; j++) {
