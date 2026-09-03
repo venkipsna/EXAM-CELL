@@ -295,7 +295,7 @@
 </div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycbwnKpsqk3lGWh2Xvyu73S9uwVBlT9uxfgrXlPuMTOvWwdVXbgXIUCBEULpTk8FRkS-Z/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbyHZDZKsFcmWz0_J31Y5FUS3vLtkpx6ebTOs89OtChSUu3n41-VJcSyWrwrzkd2j7MD/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
@@ -488,14 +488,14 @@
         if (reg.registered) {
           showSuccessCard(reg.slots);
         } else {
-          if (reg.requiredSlotCount !== undefined && reg.requiredSlotCount !== SLOT_COUNT) {
+          if (reg.requiredSlotCount !== undefined && reg.requiredSlotCount < SLOT_COUNT) {
             SLOT_COUNT = reg.requiredSlotCount;
             SCHEDULE_PLAN = [{ schedule: '', count: SLOT_COUNT }]; // reduced mode: flat, no schedule grouping/quota
             buildSS(SLOT_COUNT);
             const slotsHeading = document.getElementById('slotsHeading');
             if (slotsHeading) {
               slotsHeading.textContent = 'Select Date & Session for '+SLOT_COUNT+' Slot'+(SLOT_COUNT===1?'':'s')+
-                ' (your duty count for this exam has been set individually)';
+                ' (some of your duty is already covered by accepted alternate assignments)';
             }
           }
           renderSlotCards();
