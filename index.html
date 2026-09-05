@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -296,7 +295,7 @@
 </div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycbzE_yD9ngn-LuNov_n3wUu0pouhv0QslPwgOCcW-EMmI3MxeA_kkamRLXfsq75CL0-N/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbzRaFMtprY3ODRqtSFtVs8MledAYUSV_1hrhuYf8SsU43ge_eg9-ZNwvvuuENfsV9gV/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
@@ -725,7 +724,7 @@
         confSlotsData.forEach(function(sl,i) {
           const row = document.getElementById('alterRow_'+i);
           if (!row) return;
-          const st = statuses[sl.col];
+          const st = statuses[i];
           if (st && st.status === 'ACCEPTED') {
             row.innerHTML = '<span class="alter-badge accepted">✓ Accepted by '+st.altName+'</span>'+
               '<div class="alter-detail-heading">Alter Details</div>'+
@@ -859,7 +858,7 @@
     const ymd = parts.length===3 ? (parts[2]+'-'+parts[1]+'-'+parts[0]) : sl.date;
     apiPost('requestAlter', {
       email: verifiedEmail,
-      slotIndex: sl.col,
+      slotIndex: alterSlotIndex,
       date: ymd,
       session: sl.session,
       altEmail: altEmail,
