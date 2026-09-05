@@ -488,9 +488,9 @@
         if (reg.registered) {
           showSuccessCard(reg.slots);
         } else {
-          if (reg.requiredSlotCount !== undefined && reg.requiredSlotCount < SLOT_COUNT) {
+          if (reg.requiredSlotCount !== undefined && reg.requiredSlotCount !== SLOT_COUNT) {
             SLOT_COUNT = reg.requiredSlotCount;
-            SCHEDULE_PLAN = [{ schedule: '', count: SLOT_COUNT }]; // reduced mode: flat, no schedule grouping/quota
+            SCHEDULE_PLAN = [{ schedule: '', count: SLOT_COUNT }]; // custom count: flat, no schedule grouping/quota
             buildSS(SLOT_COUNT);
             const slotsHeading = document.getElementById('slotsHeading');
             if (slotsHeading) {
