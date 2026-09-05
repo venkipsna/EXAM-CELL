@@ -28,6 +28,8 @@
   .sched-group:last-child{margin-bottom:0}
   .sched-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:5px}
   .date-pill{font-size:13px;font-weight:700;color:rgba(255,255,255,.78);background:rgba(15,113,115,.18);border:1px solid rgba(15,113,115,.28);border-radius:8px;padding:7px 10px;text-align:center;letter-spacing:.2px;white-space:nowrap;}
+  .date-pill.sess-line{text-align:left;white-space:normal;font-weight:500;font-size:12px;line-height:1.5;margin-bottom:4px}
+  .date-pill.sess-line b{color:rgba(255,255,255,.95);font-weight:700}
   .main-area{flex:1;min-width:0}
   @keyframes slideUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:none}}
   @keyframes fadeIn {from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none}}
@@ -295,7 +297,7 @@
 </div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycbwsDuAs603qhOJPIDDzoHN0hmH8UhtD4mALyB7wOZuuliRQGWy56S1s24-NyEqusJDt/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbw5UbH2alehgOa0xxcTPxJM5bFekn5BdhfnpGHo4OptPB_S3qDLcji-QHDChcyDGFlK/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
@@ -352,9 +354,10 @@
         }
         const successSubtext = document.getElementById('successSubtext');
         if (successSubtext) successSubtext.textContent = 'Your '+SLOT_COUNT+' exam duty slot'+(SLOT_COUNT===1?'':'s')+' '+(SLOT_COUNT===1?'is':'are')+' confirmed.';
-        // Populate sidebar date list — grouped by schedule, consecutive dates collapsed into ranges
+        // Populate sidebar date list — grouped by schedule, then by session,
+        // with consecutive dates collapsed into ranges within each session group
         const sidebarDates = document.getElementById('sidebarDates');
-        const scheduleDates = (cfg && cfg.scheduleDates) || null;
+        const scheduleSessionDates = (cfg && cfg.scheduleSessionDates) || null;
         if (availableDates.length === 0) {
           sidebarDates.innerHTML='<div style="font-size:11px;color:rgba(255,255,255,.4)">No dates configured</div>';
         } else {
@@ -370,16 +373,21 @@
             }
             return groups;
           }
-          if (scheduleDates && Object.keys(scheduleDates).length > 1) {
-            const schedLabels = Object.keys(scheduleDates).sort(function(a,b){
+          if (scheduleSessionDates && Object.keys(scheduleSessionDates).length > 0) {
+            const schedLabels = Object.keys(scheduleSessionDates).sort(function(a,b){
               const na=parseFloat(a), nb=parseFloat(b);
               return (!isNaN(na)&&!isNaN(nb)) ? na-nb : a.localeCompare(b);
             });
             sidebarDates.innerHTML = schedLabels.map(function(label){
-              const pills = rangesFor(scheduleDates[label]).map(function(g){
-                return '<div class="date-pill">'+g+'</div>';
-              }).join('');
-              return '<div class="sched-group"><div class="sched-label">Schedule '+label+'</div>'+pills+'</div>';
+              const sd = scheduleSessionDates[label];
+              let sessionLines = '';
+              ['FN','AN'].forEach(function(sess){
+                if (sd[sess] && sd[sess].length) {
+                  const ranges = rangesFor(sd[sess]).join(', ');
+                  sessionLines += '<div class="date-pill sess-line"><b>'+sess+':</b> '+ranges+'</div>';
+                }
+              });
+              return '<div class="sched-group"><div class="sched-label">Schedule '+label+'</div>'+sessionLines+'</div>';
             }).join('');
           } else {
             const dates = availableDates.map(function(x){ return x.date; });
