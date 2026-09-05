@@ -295,7 +295,7 @@
 </div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycbzHOJv3_gSLMGX402x9a25DIpGxDXm4coVgPn-m7ruWS__VTGrBDSeMc1h23V-HQ3yI/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbzOsHBF96hvwAkAoFHbedrsnE6X4NyatjLS7e4v7x8Ndytx0vZo955xWeOAYaJvTwOA/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
@@ -315,7 +315,6 @@
   let SCHEDULES=['1'];
   let SCHEDULE_PLAN=[]; // [{schedule, count}] — how SLOT-COUNT is divided across schedules
   let slotSchedule=[]; // slotSchedule[i] = schedule label that slot i belongs to
-  let sessionSchedule={}; // "date|session" -> schedule label
   let SS=[];
   function buildSS(n){
     SS=[];
@@ -338,7 +337,6 @@
       .then(function(cfg) {
         clearTimeout(timeout);
         availableDates = (cfg && cfg.dateSlots) ? cfg.dateSlots : [];
-        sessionSchedule = (cfg && cfg.sessionSchedule) || {};
         SCHEDULES = (cfg && cfg.schedules && cfg.schedules.length) ? cfg.schedules : ['1'];
         PER_SCHEDULE = (cfg && cfg.perSchedule) ? cfg.perSchedule : 1;
         SLOT_COUNT = (cfg && cfg.slotCount) ? cfg.slotCount : (PER_SCHEDULE * SCHEDULES.length);
@@ -488,16 +486,6 @@
         if (reg.registered) {
           showSuccessCard(reg.slots);
         } else {
-          if (reg.requiredSlotCount !== undefined && reg.requiredSlotCount < SLOT_COUNT) {
-            SLOT_COUNT = reg.requiredSlotCount;
-            SCHEDULE_PLAN = [{ schedule: '', count: SLOT_COUNT }]; // reduced mode: flat, no schedule grouping/quota
-            buildSS(SLOT_COUNT);
-            const slotsHeading = document.getElementById('slotsHeading');
-            if (slotsHeading) {
-              slotsHeading.textContent = 'Select Date & Session for '+SLOT_COUNT+' Slot'+(SLOT_COUNT===1?'':'s')+
-                ' (some of your duty is already covered by accepted alternate assignments)';
-            }
-          }
           renderSlotCards();
           document.getElementById('slotsSection').style.display='block';
           loadAlteredDuties();
@@ -532,11 +520,7 @@
         slotSchedule[idx]=scheduleNo;
         let opts='<option value="">-- Date --</option>';
         availableDates.forEach(function(e){
-          if (scheduleNo) {
-            const fnMatches = sessionSchedule[e.date+'|FN'] === scheduleNo;
-            const anMatches = sessionSchedule[e.date+'|AN'] === scheduleNo;
-            if (!fnMatches && !anMatches) return;
-          }
+          if (scheduleNo && e.schedule !== scheduleNo) return;
           opts+='<option value="'+e.date+'"'+(SS[idx].date===e.date?' selected':'')+'>'+fmt(e.date)+'</option>';
         });
         const c=document.createElement('div'); c.className='slot-card'; c.id='card_'+idx;
@@ -582,11 +566,6 @@
       const en=md ? availableDates.find(function(x){return x.date===md;}) : null;
       bF.disabled=!md||(en&&en.fnMax===0);
       bA.disabled=!md||(en&&en.anMax===0);
-      const scheduleNo = slotSchedule[i] || '';
-      if (md && scheduleNo) {
-        if (sessionSchedule[md+'|FN'] !== scheduleNo) bF.disabled = true;
-        if (sessionSchedule[md+'|AN'] !== scheduleNo) bA.disabled = true;
-      }
       if (!md) continue;
       let fu=0, au=0;
       for (let j=0; j<SLOT_COUNT; j++) {
