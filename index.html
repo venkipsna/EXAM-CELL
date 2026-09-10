@@ -297,7 +297,7 @@
 </div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycby766HExfol5xDwrhOWeuImiXJQ7PRMDGWfjovweykvTHVzOsdpDcM9UgvRsUQ5Lpg/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxpyxA5K3qmdo97Mjc3zDE2x3HntOvMqDGtMjfBMG6GUcLkJatkJg8gRW5KcuBI4W8h/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
@@ -588,20 +588,13 @@
       const bF=document.getElementById('bFN_'+i), bA=document.getElementById('bAN_'+i);
       if (!bF||!bA) continue;
       const en=md ? availableDates.find(function(x){return x.date===md;}) : null;
-      bF.disabled=!md||(en&&en.fnMax===0);
-      bA.disabled=!md||(en&&en.anMax===0);
+      bF.disabled=!md||(en&&!en.fnOffered);
+      bA.disabled=!md||(en&&!en.anOffered);
       const scheduleNo = slotSchedule[i] || '';
       if (md && scheduleNo) {
         if (sessionSchedule[md+'|FN'] !== scheduleNo) bF.disabled = true;
         if (sessionSchedule[md+'|AN'] !== scheduleNo) bA.disabled = true;
       }
-      if (!md) continue;
-      let fu=0, au=0;
-      for (let j=0; j<SLOT_COUNT; j++) {
-        if (j===i) continue;
-        if (SS[j].date===md) { if(SS[j].session==='FN')fu++; if(SS[j].session==='AN')au++; }
-      }
-      if (en) { if(fu>=en.fnMax)bF.disabled=true; if(au>=en.anMax)bA.disabled=true; }
     }
   }
 
@@ -613,19 +606,13 @@
     const scheduleNo = slotSchedule[i] || '';
     apiGet('availability', {date: d, session: s, schedule: scheduleNo})
       .then(function(res) {
-        const info=res.session, schedInfo=res.schedule;
+        const info=res.session;
         let p=0;
         for (let j=0; j<SLOT_COUNT; j++) if (j!==i&&SS[j].date===d&&SS[j].session===s) p++;
-        const sessRem = info.max-(info.count+p);
-        const schedRem = (schedInfo.max>0) ? (schedInfo.max-schedInfo.count) : Infinity;
-        const rem = Math.min(sessRem, schedRem);
-        const full = rem<=0;
-        ae.className='slot-avail show '+(full?'full':rem<=5?'warn':'ok');
-        if (full) {
-          at.textContent = (schedRem<=0 && sessRem>0) ? 'Schedule full — pick another date' : 'Full — pick another';
-        } else {
-          at.textContent = (isFinite(rem)?rem:sessRem)+' / '+info.max+' remaining';
-        }
+        // No capacity cap — this is purely informational (how many have booked so far).
+        ae.className='slot-avail show ok';
+        const total = info.count + p;
+        at.textContent = total + (total===1 ? ' faculty booked so far' : ' faculty booked so far');
         for (let j=0; j<SLOT_COUNT; j++) if (j!==i&&SS[j].date===d&&SS[j].session===s) chkAv(j);
         chkRdy();
       })
