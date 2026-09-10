@@ -24,6 +24,9 @@
   .sidebar{width:190px;flex-shrink:0;background:linear-gradient(180deg,#0f2027 0%,#16213e 100%);padding:22px 12px 30px;border-right:1px solid rgba(255,255,255,.07)}
   .sidebar-title{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.10)}
   .date-list{display:flex;flex-direction:column;gap:5px}
+  .sched-group{margin-bottom:10px}
+  .sched-group:last-child{margin-bottom:0}
+  .sched-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:rgba(255,255,255,.5);margin-bottom:5px}
   .date-pill{font-size:13px;font-weight:700;color:rgba(255,255,255,.78);background:rgba(15,113,115,.18);border:1px solid rgba(15,113,115,.28);border-radius:8px;padding:7px 10px;text-align:center;letter-spacing:.2px;white-space:nowrap;}
   .main-area{flex:1;min-width:0}
   @keyframes slideUp{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:none}}
@@ -66,6 +69,8 @@
   .vlabel{font-size:11px;font-weight:600;color:var(--teal);text-transform:uppercase;letter-spacing:.5px}
   .vemail{font-size:15px;font-weight:600;color:var(--ink);margin-top:2px}
   .vtick{width:26px;height:26px;border-radius:50%;background:var(--success);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+  .signout-btn{border:1.5px solid var(--teal);background:#fff;color:var(--teal);font-family:'Josefin Sans',sans-serif;font-size:12px;font-weight:700;letter-spacing:.3px;border-radius:8px;padding:8px 14px;cursor:pointer;flex-shrink:0;transition:all .15s}
+  .signout-btn:hover{background:var(--teal-light)}
 
   .user-info{background:var(--teal-light);border-radius:12px;padding:16px 18px;margin:0 0 16px;border-left:4px solid var(--teal)}
   .user-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}
@@ -130,13 +135,20 @@
   .session-pill{display:inline-block;margin-top:5px;padding:3px 11px;border-radius:20px;font-size:13px;font-weight:700}
   .session-pill.FN{background:#fff8e1;color:#7a5c00;border:1px solid #f5d97e}
   .session-pill.AN{background:#e8f4fd;color:#1a5276;border:1px solid #aed6f1}
+  .taken-from{font-size:11px;color:#8a8f98;margin-top:8px;line-height:1.4}
+  .taken-from b{color:#5c6068}
 
   .alter-row{margin-top:10px}
   .alter-btn{width:100%;padding:7px 6px;border:1.5px solid var(--teal);border-radius:8px;background:#fff;color:var(--teal);font-family:'Josefin Sans',sans-serif;font-size:12px;font-weight:700;letter-spacing:.3px;cursor:pointer;transition:all .15s}
   .alter-btn:hover{background:var(--teal-light)}
+  .alter-detail{font-size:10.5px;color:#8a8f98;line-height:1.5;text-align:center;margin-top:5px}
+  .alter-detail b{color:#5c6068}
+  .alter-detail-heading{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--teal);text-align:center;margin-top:10px;padding-top:10px;border-top:1px dashed var(--border)}
   .alter-badge{display:block;width:100%;padding:7px 6px;border-radius:8px;font-size:12px;font-weight:700;text-align:center;letter-spacing:.2px}
-  .alter-badge.pending{background:#fff8e1;color:#7a5c00;border:1px solid #f5d97e}
+  .alter-badge.pending{background:#fff8e1;color:#7a5c00;border:1px solid #f5d97e;animation:pendingBlink 1s ease-in-out infinite}
   .alter-badge.accepted{background:#e6f4ea;color:#256029;border:1px solid #b7dfbe}
+  .alter-badge.rejected{background:#fdecea;color:#a13a2f;border:1px solid #f2b8ae;margin-bottom:6px}
+  @keyframes pendingBlink{0%,100%{opacity:1}50%{opacity:.25}}
 
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(15,20,30,.55);align-items:center;justify-content:center;z-index:999;padding:16px}
   .modal-overlay.show{display:flex;animation:fadeIn .2s ease both}
@@ -179,12 +191,15 @@
 
     <div class="st" id="stLogin">
       <div class="login-box">
-        <div class="login-title">Enter Your Email ID</div>
-        <div class="login-sub">Use the same email registered with the Exam Cell.</div>
-        <div class="input-row">
+        <div class="login-title">Sign In</div>
+        <div class="login-sub">Use your registered email and password.</div>
+        <div class="input-row" style="margin-bottom:10px">
           <input type="email" id="emailInput" placeholder="e.g. XXXXXXXXX@gmail.com" autocomplete="email">
-          <button class="btn-go" id="goBtn" onclick="doVerify()">Proceed →</button>
         </div>
+        <div class="input-row">
+          <input type="password" id="passwordInput" placeholder="Password" autocomplete="current-password">
+        </div>
+        <button class="btn-go" id="goBtn" style="width:100%;margin-top:12px;border-radius:11px" onclick="doVerify()">Proceed →</button>
         <div class="err" id="errBox"></div>
       </div>
     </div>
@@ -204,6 +219,8 @@
           <div class="vemail" id="vemail">—</div>
         </div>
         <div class="vtick">✓</div>
+        <button type="button" class="signout-btn" onclick="openChangePasswordModal()">Change Password</button>
+        <button type="button" class="signout-btn" onclick="signOut()">Sign Out</button>
       </div>
 
       <div class="user-info">
@@ -231,6 +248,11 @@
         <p id="successSubtext">Your exam duty slots are confirmed.</p>
         <div class="conf-grid" id="confSlots"></div>
       </div>
+
+      <div id="alteredDetailsSection" style="display:none;margin-top:22px">
+        <h3 style="text-align:center;font-size:18px;font-weight:700;color:var(--ink);margin-bottom:14px">Altered Details</h3>
+        <div class="conf-grid" id="alteredDetailsGrid"></div>
+      </div>
     </div>
 
   </div><!-- /body -->
@@ -253,9 +275,27 @@
     </div>
   </div>
 </div>
+
+<div class="modal-overlay" id="pwOverlay" onclick="if(event.target===this)closeChangePasswordModal()">
+  <div class="modal-box">
+    <h3>Change Password</h3>
+    <div class="modal-sub">Enter your current password and choose a new one.</div>
+    <label>Old Password</label>
+    <input type="password" class="modal-select" id="pwOld" autocomplete="current-password">
+    <label>New Password</label>
+    <input type="password" class="modal-select" id="pwNew" autocomplete="new-password">
+    <label>Confirm New Password</label>
+    <input type="password" class="modal-select" id="pwConfirm" autocomplete="new-password">
+    <div class="modal-err" id="pwErr"></div>
+    <div class="modal-btns">
+      <button type="button" onclick="closeChangePasswordModal()">Cancel</button>
+      <button type="button" class="btn-primary" id="pwSubmitBtn" onclick="submitChangePassword()">Update Password</button>
+    </div>
+  </div>
+</div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycbykqFzt0FxKKh8MnkXIRfddlokWOAz9O6V4xPJsDYfR4JrCwBAI80FBH6ZjSZQhBigm/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbw61jOGwT96s0oy7mXk37WRwjlBQXF6IZTZf6d941LC5ok40surMohe8FVqXm9RvbE1/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
@@ -310,32 +350,50 @@
         }
         const successSubtext = document.getElementById('successSubtext');
         if (successSubtext) successSubtext.textContent = 'Your '+SLOT_COUNT+' exam duty slot'+(SLOT_COUNT===1?'':'s')+' '+(SLOT_COUNT===1?'is':'are')+' confirmed.';
-        // Populate sidebar date list — group consecutive dates into ranges
+        // Populate sidebar date list — grouped by schedule, consecutive dates collapsed into ranges
         const sidebarDates = document.getElementById('sidebarDates');
+        const scheduleDates = (cfg && cfg.scheduleDates) || null;
         if (availableDates.length === 0) {
           sidebarDates.innerHTML='<div style="font-size:11px;color:rgba(255,255,255,.4)">No dates configured</div>';
         } else {
-          const dates = availableDates.map(function(x){ return x.date; }).sort();
-          const groups = [];
-          let i = 0;
-          while (i < dates.length) {
-            let j = i;
-            while (j + 1 < dates.length && isNextDay(dates[j], dates[j+1])) j++;
-            if (j > i) {
-              groups.push(fmt(dates[i]) + ' - ' + fmt(dates[j]));
-            } else {
-              groups.push(fmt(dates[i]));
+          function rangesFor(dateList) {
+            const dates = dateList.slice().sort();
+            const groups = [];
+            let i = 0;
+            while (i < dates.length) {
+              let j = i;
+              while (j + 1 < dates.length && isNextDay(dates[j], dates[j+1])) j++;
+              groups.push(j > i ? (fmt(dates[i]) + ' - ' + fmt(dates[j])) : fmt(dates[i]));
+              i = j + 1;
             }
-            i = j + 1;
+            return groups;
           }
-          sidebarDates.innerHTML = groups.map(function(g){
-            return '<div class="date-pill">'+g+'</div>';
-          }).join('');
+          if (scheduleDates && Object.keys(scheduleDates).length > 1) {
+            const schedLabels = Object.keys(scheduleDates).sort(function(a,b){
+              const na=parseFloat(a), nb=parseFloat(b);
+              return (!isNaN(na)&&!isNaN(nb)) ? na-nb : a.localeCompare(b);
+            });
+            sidebarDates.innerHTML = schedLabels.map(function(label){
+              const pills = rangesFor(scheduleDates[label]).map(function(g){
+                return '<div class="date-pill">'+g+'</div>';
+              }).join('');
+              return '<div class="sched-group"><div class="sched-label">Schedule '+label+'</div>'+pills+'</div>';
+            }).join('');
+          } else {
+            const dates = availableDates.map(function(x){ return x.date; });
+            sidebarDates.innerHTML = rangesFor(dates).map(function(g){
+              return '<div class="date-pill">'+g+'</div>';
+            }).join('');
+          }
         }
         const params   = new URLSearchParams(window.location.search);
         const urlEmail = params.get('email');
+        const savedEmail    = (function(){ try { return localStorage.getItem('examDutyEmail') || ''; } catch(e){ return ''; } })();
+        const savedPassword = (function(){ try { return localStorage.getItem('examDutyPassword') || ''; } catch(e){ return ''; } })();
         if (urlEmail && urlEmail.trim() !== '') {
           autoVerify(urlEmail.trim());
+        } else if (savedEmail && savedPassword) {
+          restoreSession(savedEmail, savedPassword);
         } else {
           show('stLogin');
         }
@@ -351,6 +409,7 @@
     apiGet('verify', {email: email})
       .then(function(result) {
         if (!result.found) {
+          try { localStorage.removeItem('examDutyEmail'); localStorage.removeItem('examDutyPassword'); } catch(e){}
           document.getElementById('deniedMsg').innerHTML =
             'Your account <b>('+email+')</b> is not registered.<br>Please contact the administrator.';
           show('stDenied'); return;
@@ -360,18 +419,49 @@
       .catch(function() { show('stLogin'); });
   }
 
+  // Silent re-login on page refresh using the saved email+password.
+  function restoreSession(email, password) {
+    apiGet('verify', {email: email, password: password})
+      .then(function(result) {
+        if (!result.found || result.authFailed) {
+          try { localStorage.removeItem('examDutyEmail'); localStorage.removeItem('examDutyPassword'); } catch(e){}
+          show('stLogin'); return;
+        }
+        proceedToMain(email, result);
+      })
+      .catch(function() { show('stLogin'); });
+  }
+
+  function signOut() {
+    try { localStorage.removeItem('examDutyEmail'); localStorage.removeItem('examDutyPassword'); } catch(e){}
+    verifiedEmail = ''; verifiedName = '';
+    // Strip ?email= from the URL so a personal link doesn't auto-relogin on refresh
+    if (new URLSearchParams(window.location.search).get('email')) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('email');
+      window.history.replaceState({}, '', url.toString());
+    }
+    document.getElementById('emailInput').value = '';
+    document.getElementById('passwordInput').value = '';
+    show('stLogin');
+  }
+
   function doVerify() {
-    const email = document.getElementById('emailInput').value.trim();
+    const email    = document.getElementById('emailInput').value.trim();
+    const password = document.getElementById('passwordInput').value.trim();
     const err   = document.getElementById('errBox');
     const btn   = document.getElementById('goBtn');
     err.classList.remove('show');
     if (!email) { showErr('Please enter your email.'); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('Please enter a valid email address.'); return; }
+    if (!password) { showErr('Please enter your password.'); return; }
     btn.textContent='…'; btn.disabled=true;
-    apiGet('verify', {email: email})
+    apiGet('verify', {email: email, password: password})
       .then(function(result) {
         btn.textContent='Proceed →'; btn.disabled=false;
         if (!result.found) { showErr('Email not registered. Please contact the administrator.'); return; }
+        if (result.authFailed) { showErr('Incorrect password.'); return; }
+        try { localStorage.setItem('examDutyPassword', password); } catch(e){}
         proceedToMain(email, result);
       })
       .catch(function() {
@@ -383,6 +473,7 @@
   function proceedToMain(email, result) {
     verifiedEmail = email;
     verifiedName  = result.name || '';
+    try { localStorage.setItem('examDutyEmail', email); } catch(e){}
     document.getElementById('vavatar').textContent   = email.charAt(0).toUpperCase();
     document.getElementById('vemail').textContent    = email;
     document.getElementById('dispName').textContent  = result.name;
@@ -397,6 +488,7 @@
         } else {
           renderSlotCards();
           document.getElementById('slotsSection').style.display='block';
+          loadAlteredDuties();
         }
       })
       .catch(function() { showMsg('Error checking registration. Please refresh.','error'); });
@@ -581,8 +673,8 @@
     slots.forEach(function(sl,i) {
       const d=document.createElement('div'); d.className='conf-slot'; d.id='confSlot_'+i;
       d.innerHTML='<div class="conf-num">Slot '+(i+1)+'</div>'+
-        '<div class="conf-date">'+sl.date+'</div>'+
-        '<span class="session-pill '+sl.session+'">'+sl.session+'</span>'+
+        '<div class="conf-date">'+(sl.date || '—')+'</div>'+
+        '<span class="session-pill '+sl.session+'">'+(sl.session || '')+'</span>'+
         '<div class="alter-row" id="alterRow_'+i+'">'+
           '<button type="button" class="alter-btn" onclick="openAlterModal('+i+')">Alter</button>'+
         '</div>';
@@ -590,9 +682,40 @@
     });
     document.getElementById('successCard').classList.add('show');
     refreshAlterStatuses();
+    loadAlteredDuties();
+  }
+
+  function loadAlteredDuties() {
+    if (!verifiedEmail) return;
+    apiGet('alteredDuties', {email: verifiedEmail})
+      .then(function(duties) {
+        const section = document.getElementById('alteredDetailsSection');
+        const grid = document.getElementById('alteredDetailsGrid');
+        if (!duties || !duties.length) { section.style.display='none'; return; }
+        grid.innerHTML = duties.map(function(d,i){
+          return '<div class="conf-slot">'+
+            '<div class="conf-num">Taken Over</div>'+
+            '<div class="conf-date">'+fmt(d.date)+'</div>'+
+            '<span class="session-pill '+d.session+'">'+d.session+'</span>'+
+            '<div class="taken-from">From <b>'+d.reqName+'</b>'+(d.respondedAt?'<br>Accepted on '+formatDT(d.respondedAt):'')+'</div>'+
+          '</div>';
+        }).join('');
+        section.style.display='block';
+      })
+      .catch(function(){ /* leave section hidden if this fails */ });
   }
 
   let confSlotsData=[];
+
+  function formatDT(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    const dd = String(d.getDate()).padStart(2,'0'), mm = String(d.getMonth()+1).padStart(2,'0'), yy = d.getFullYear();
+    let h = d.getHours(), mi = String(d.getMinutes()).padStart(2,'0');
+    const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12; if (h === 0) h = 12;
+    return dd+'-'+mm+'-'+yy+', '+h+':'+mi+' '+ap;
+  }
 
   function refreshAlterStatuses() {
     if (!verifiedEmail || !confSlotsData.length) return;
@@ -601,11 +724,22 @@
         confSlotsData.forEach(function(sl,i) {
           const row = document.getElementById('alterRow_'+i);
           if (!row) return;
-          const st = statuses[i];
+          const st = statuses[sl.col];
           if (st && st.status === 'ACCEPTED') {
-            row.innerHTML = '<span class="alter-badge accepted">✓ Accepted by '+st.altName+'</span>';
+            row.innerHTML = '<span class="alter-badge accepted">✓ Accepted by '+st.altName+'</span>'+
+              '<div class="alter-detail-heading">Alter Details</div>'+
+              '<div class="alter-detail"><b>'+st.altName+'</b>'+(st.altDept?' · '+st.altDept:'')+'<br>'+
+              (st.altEmail||'')+(st.respondedAt?'<br>Accepted on '+formatDT(st.respondedAt):'')+'</div>';
           } else if (st && st.status === 'PENDING') {
-            row.innerHTML = '<span class="alter-badge pending">Alternate Pending</span>';
+            row.innerHTML = '<span class="alter-badge pending">Alternate Pending</span>'+
+              '<div class="alter-detail-heading">Alter Details</div>'+
+              '<div class="alter-detail">Requested to <b>'+st.altName+'</b>'+(st.altDept?' · '+st.altDept:'')+
+              (st.requestedAt?'<br>Sent on '+formatDT(st.requestedAt):'')+'</div>';
+          } else if (st && st.status === 'REJECTED') {
+            row.innerHTML = '<span class="alter-badge rejected">✗ Declined by '+st.altName+'</span>'+
+              '<div class="alter-detail-heading">Alter Details</div>'+
+              '<div class="alter-detail">'+(st.respondedAt?'Declined on '+formatDT(st.respondedAt):'')+'</div>'+
+              '<button type="button" class="alter-btn" onclick="openAlterModal('+i+')">Alter</button>';
           } else {
             row.innerHTML = '<button type="button" class="alter-btn" onclick="openAlterModal('+i+')">Alter</button>';
           }
@@ -640,6 +774,50 @@
   function closeAlterModal() {
     document.getElementById('alterOverlay').classList.remove('show');
     alterSlotIndex = -1;
+  }
+
+  // ── Change Password modal ──
+  function openChangePasswordModal() {
+    document.getElementById('pwOld').value = '';
+    document.getElementById('pwNew').value = '';
+    document.getElementById('pwConfirm').value = '';
+    document.getElementById('pwErr').classList.remove('show');
+    document.getElementById('pwSubmitBtn').disabled = false;
+    document.getElementById('pwSubmitBtn').textContent = 'Update Password';
+    document.getElementById('pwOverlay').classList.add('show');
+  }
+
+  function closeChangePasswordModal() {
+    document.getElementById('pwOverlay').classList.remove('show');
+  }
+
+  function submitChangePassword() {
+    const oldP = document.getElementById('pwOld').value.trim();
+    const newP = document.getElementById('pwNew').value.trim();
+    const confirmP = document.getElementById('pwConfirm').value.trim();
+    const errEl = document.getElementById('pwErr');
+    const btn = document.getElementById('pwSubmitBtn');
+    errEl.classList.remove('show');
+
+    function showPwErr(msg) { errEl.textContent = msg; errEl.classList.add('show'); }
+
+    if (!oldP || !newP || !confirmP) { showPwErr('Please fill in all fields.'); return; }
+    if (newP.length < 4) { showPwErr('New password must be at least 4 characters.'); return; }
+    if (newP !== confirmP) { showPwErr('New password and confirmation do not match.'); return; }
+    if (newP === oldP) { showPwErr('New password must be different from the old password.'); return; }
+
+    btn.disabled = true; btn.textContent = 'Updating…';
+    apiPost('changePassword', { email: verifiedEmail, oldPassword: oldP, newPassword: newP })
+      .then(function(result) {
+        btn.disabled = false; btn.textContent = 'Update Password';
+        if (!result.success) { showPwErr(result.message || 'Could not update password.'); return; }
+        try { localStorage.setItem('examDutyPassword', newP); } catch(e){}
+        closeChangePasswordModal();
+      })
+      .catch(function() {
+        btn.disabled = false; btn.textContent = 'Update Password';
+        showPwErr('Connection error. Please try again.');
+      });
   }
 
   function onAlterDeptChange() {
@@ -680,7 +858,7 @@
     const ymd = parts.length===3 ? (parts[2]+'-'+parts[1]+'-'+parts[0]) : sl.date;
     apiPost('requestAlter', {
       email: verifiedEmail,
-      slotIndex: alterSlotIndex,
+      slotIndex: sl.col,
       date: ymd,
       session: sl.session,
       altEmail: altEmail,
