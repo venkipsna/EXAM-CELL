@@ -295,7 +295,7 @@
 </div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycbwpaT9rwBID2dNv6XVWLAazUmAudsbC7fP18fBbg4avQrhLnX16YTE78013_w3pWBcI/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbxn15wX1cKTYhGTHvW9bX1wWaoe76Ohvb9GXIy1EbdT11BoaWftIgKDYCqVKqBJ3C5-/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
@@ -314,6 +314,7 @@
   let PER_SCHEDULE=1;
   let SCHEDULES=['1'];
   let SCHEDULE_PLAN=[]; // [{schedule, count}] — how SLOT-COUNT is divided across schedules
+  let DATE_SCHEDULE_SESSIONS={}; // "date|schedule" -> ["FN","AN"] — which sessions are actually valid for that date+schedule
   let slotSchedule=[]; // slotSchedule[i] = schedule label that slot i belongs to
   let SS=[];
   function buildSS(n){
@@ -341,6 +342,7 @@
         PER_SCHEDULE = (cfg && cfg.perSchedule) ? cfg.perSchedule : 1;
         SLOT_COUNT = (cfg && cfg.slotCount) ? cfg.slotCount : (PER_SCHEDULE * SCHEDULES.length);
         SCHEDULE_PLAN = (cfg && cfg.schedulePlan && cfg.schedulePlan.length) ? cfg.schedulePlan : [{schedule:(SCHEDULES[0]||''), count:SLOT_COUNT}];
+        DATE_SCHEDULE_SESSIONS = (cfg && cfg.dateScheduleSessions) || {};
         buildSS(SLOT_COUNT);
         const slotsHeading = document.getElementById('slotsHeading');
         if (slotsHeading) {
@@ -513,7 +515,9 @@
           if (scheduleNo && e.schedule !== scheduleNo) return;
           if (seenDates[e.date]) return; // same date can appear twice now (once per session row)
           seenDates[e.date]=true;
-          opts+='<option value="'+e.date+'"'+(SS[idx].date===e.date?' selected':'')+'>'+fmt(e.date)+'</option>';
+          const sessList = DATE_SCHEDULE_SESSIONS[e.date+'|'+scheduleNo] || (e.session?[e.session]:[]);
+          const sessLabel = sessList.length===1 ? ' ('+sessList[0]+')' : '';
+          opts+='<option value="'+e.date+'"'+(SS[idx].date===e.date?' selected':'')+'>'+fmt(e.date)+sessLabel+'</option>';
         });
         const c=document.createElement('div'); c.className='slot-card'; c.id='card_'+idx;
         c.innerHTML=
@@ -539,11 +543,20 @@
     document.getElementById('bFN_'+i).className='sess-btn';
     document.getElementById('bAN_'+i).className='sess-btn';
     document.getElementById('av_'+i).classList.remove('show');
-    updBtns(); chkRdy();
+    updBtns();
+    // If this date has exactly one valid session under this slot's schedule,
+    // auto-select it instead of making the faculty click a button.
+    const scheduleNo = slotSchedule[i] || '';
+    const validSess = SS[i].date ? (DATE_SCHEDULE_SESSIONS[SS[i].date+'|'+scheduleNo] || []) : [];
+    if (validSess.length === 1) onSC(i, validSess[0]);
+    chkRdy();
   }
 
   function onSC(i,s) {
     if (!SS[i].date) return;
+    const scheduleNo = slotSchedule[i] || '';
+    const validSess = DATE_SCHEDULE_SESSIONS[SS[i].date+'|'+scheduleNo];
+    if (validSess && validSess.indexOf(s) === -1) return; // not a valid session for this date/schedule
     SS[i].session=s;
     document.getElementById('bFN_'+i).className='sess-btn'+(s==='FN'?' active-fn':'');
     document.getElementById('bAN_'+i).className='sess-btn'+(s==='AN'?' active-an':'');
@@ -555,9 +568,11 @@
       const md=SS[i].date;
       const bF=document.getElementById('bFN_'+i), bA=document.getElementById('bAN_'+i);
       if (!bF||!bA) continue;
-      const en=md ? availableDates.find(function(x){return x.date===md;}) : null;
-      bF.disabled=!md||(en&&en.fnMax===0);
-      bA.disabled=!md||(en&&en.anMax===0);
+      const scheduleNo = slotSchedule[i] || '';
+      const validSess = md ? DATE_SCHEDULE_SESSIONS[md+'|'+scheduleNo] : null;
+      const en=md ? availableDates.find(function(x){return x.date===md && x.schedule===scheduleNo;}) : null;
+      bF.disabled=!md||(en&&en.fnMax===0)||(validSess&&validSess.indexOf('FN')===-1);
+      bA.disabled=!md||(en&&en.anMax===0)||(validSess&&validSess.indexOf('AN')===-1);
       if (!md) continue;
       let fu=0, au=0;
       for (let j=0; j<SLOT_COUNT; j++) {
