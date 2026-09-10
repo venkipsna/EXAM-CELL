@@ -192,12 +192,12 @@
     <div class="st" id="stLogin">
       <div class="login-box">
         <div class="login-title">Sign In</div>
-        <div class="login-sub">Use your registered email and password.</div>
+        <div class="login-sub">Use your registered email and mobile number as password.</div>
         <div class="input-row" style="margin-bottom:10px">
           <input type="email" id="emailInput" placeholder="e.g. XXXXXXXXX@gmail.com" autocomplete="email">
         </div>
         <div class="input-row">
-          <input type="password" id="passwordInput" placeholder="Password" autocomplete="current-password">
+          <input type="password" id="passwordInput" placeholder="Mobile number" autocomplete="current-password" inputmode="numeric">
         </div>
         <button class="btn-go" id="goBtn" style="width:100%;margin-top:12px;border-radius:11px" onclick="doVerify()">Proceed →</button>
         <div class="err" id="errBox"></div>
@@ -219,7 +219,6 @@
           <div class="vemail" id="vemail">—</div>
         </div>
         <div class="vtick">✓</div>
-        <button type="button" class="signout-btn" onclick="openChangePasswordModal()">Change Password</button>
         <button type="button" class="signout-btn" onclick="signOut()">Sign Out</button>
       </div>
 
@@ -275,27 +274,9 @@
     </div>
   </div>
 </div>
-
-<div class="modal-overlay" id="pwOverlay" onclick="if(event.target===this)closeChangePasswordModal()">
-  <div class="modal-box">
-    <h3>Change Password</h3>
-    <div class="modal-sub">Enter your current password and choose a new one.</div>
-    <label>Old Password</label>
-    <input type="password" class="modal-select" id="pwOld" autocomplete="current-password">
-    <label>New Password</label>
-    <input type="password" class="modal-select" id="pwNew" autocomplete="new-password">
-    <label>Confirm New Password</label>
-    <input type="password" class="modal-select" id="pwConfirm" autocomplete="new-password">
-    <div class="modal-err" id="pwErr"></div>
-    <div class="modal-btns">
-      <button type="button" onclick="closeChangePasswordModal()">Cancel</button>
-      <button type="button" class="btn-primary" id="pwSubmitBtn" onclick="submitChangePassword()">Update Password</button>
-    </div>
-  </div>
-</div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycbwiAf2GTc7P7nn0EJ_bGVAcLLGGWCGjG3100xpab3jI1aCkqnm4cPrqXcRSCo2QNo04/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbzRICDMgUQXSz9KkOv8kPmEsnWhSnCKcTVx4kroDay9DwCZGFeRS60R82enPJxl6YJo/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
@@ -454,13 +435,13 @@
     err.classList.remove('show');
     if (!email) { showErr('Please enter your email.'); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showErr('Please enter a valid email address.'); return; }
-    if (!password) { showErr('Please enter your password.'); return; }
+    if (!password) { showErr('Please enter your mobile number as password.'); return; }
     btn.textContent='…'; btn.disabled=true;
     apiGet('verify', {email: email, password: password})
       .then(function(result) {
         btn.textContent='Proceed →'; btn.disabled=false;
         if (!result.found) { showErr('Email not registered. Please contact the administrator.'); return; }
-        if (result.authFailed) { showErr('Incorrect password.'); return; }
+        if (result.authFailed) { showErr('Incorrect password. Please enter your registered mobile number.'); return; }
         try { localStorage.setItem('examDutyPassword', password); } catch(e){}
         proceedToMain(email, result);
       })
@@ -774,50 +755,6 @@
   function closeAlterModal() {
     document.getElementById('alterOverlay').classList.remove('show');
     alterSlotIndex = -1;
-  }
-
-  // ── Change Password modal ──
-  function openChangePasswordModal() {
-    document.getElementById('pwOld').value = '';
-    document.getElementById('pwNew').value = '';
-    document.getElementById('pwConfirm').value = '';
-    document.getElementById('pwErr').classList.remove('show');
-    document.getElementById('pwSubmitBtn').disabled = false;
-    document.getElementById('pwSubmitBtn').textContent = 'Update Password';
-    document.getElementById('pwOverlay').classList.add('show');
-  }
-
-  function closeChangePasswordModal() {
-    document.getElementById('pwOverlay').classList.remove('show');
-  }
-
-  function submitChangePassword() {
-    const oldP = document.getElementById('pwOld').value.trim();
-    const newP = document.getElementById('pwNew').value.trim();
-    const confirmP = document.getElementById('pwConfirm').value.trim();
-    const errEl = document.getElementById('pwErr');
-    const btn = document.getElementById('pwSubmitBtn');
-    errEl.classList.remove('show');
-
-    function showPwErr(msg) { errEl.textContent = msg; errEl.classList.add('show'); }
-
-    if (!oldP || !newP || !confirmP) { showPwErr('Please fill in all fields.'); return; }
-    if (newP.length < 4) { showPwErr('New password must be at least 4 characters.'); return; }
-    if (newP !== confirmP) { showPwErr('New password and confirmation do not match.'); return; }
-    if (newP === oldP) { showPwErr('New password must be different from the old password.'); return; }
-
-    btn.disabled = true; btn.textContent = 'Updating…';
-    apiPost('changePassword', { email: verifiedEmail, oldPassword: oldP, newPassword: newP })
-      .then(function(result) {
-        btn.disabled = false; btn.textContent = 'Update Password';
-        if (!result.success) { showPwErr(result.message || 'Could not update password.'); return; }
-        try { localStorage.setItem('examDutyPassword', newP); } catch(e){}
-        closeChangePasswordModal();
-      })
-      .catch(function() {
-        btn.disabled = false; btn.textContent = 'Update Password';
-        showPwErr('Connection error. Please try again.');
-      });
   }
 
   function onAlterDeptChange() {
