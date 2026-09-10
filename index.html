@@ -295,7 +295,7 @@
 </div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycbw61jOGwT96s0oy7mXk37WRwjlBQXF6IZTZf6d941LC5ok40surMohe8FVqXm9RvbE1/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbwpaT9rwBID2dNv6XVWLAazUmAudsbC7fP18fBbg4avQrhLnX16YTE78013_w3pWBcI/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
@@ -356,17 +356,16 @@
         if (availableDates.length === 0) {
           sidebarDates.innerHTML='<div style="font-size:11px;color:rgba(255,255,255,.4)">No dates configured</div>';
         } else {
-          function rangesFor(dateList) {
-            const dates = dateList.slice().sort();
-            const groups = [];
-            let i = 0;
-            while (i < dates.length) {
-              let j = i;
-              while (j + 1 < dates.length && isNextDay(dates[j], dates[j+1])) j++;
-              groups.push(j > i ? (fmt(dates[i]) + ' - ' + fmt(dates[j])) : fmt(dates[i]));
-              i = j + 1;
-            }
-            return groups;
+          // Each entry now carries its session (FN/AN), so dates aren't collapsed
+          // into ranges anymore — a date can appear more than once with a
+          // different session (and even a different schedule).
+          function pillsFor(entries) {
+            const sorted = entries.slice().sort(function(a,b){
+              return a.date===b.date ? (a.session||'').localeCompare(b.session||'') : a.date.localeCompare(b.date);
+            });
+            return sorted.map(function(e){
+              return '<div class="date-pill">'+fmt(e.date)+(e.session?' &middot; '+e.session:'')+'</div>';
+            }).join('');
           }
           if (scheduleDates && Object.keys(scheduleDates).length > 1) {
             const schedLabels = Object.keys(scheduleDates).sort(function(a,b){
@@ -374,16 +373,11 @@
               return (!isNaN(na)&&!isNaN(nb)) ? na-nb : a.localeCompare(b);
             });
             sidebarDates.innerHTML = schedLabels.map(function(label){
-              const pills = rangesFor(scheduleDates[label]).map(function(g){
-                return '<div class="date-pill">'+g+'</div>';
-              }).join('');
-              return '<div class="sched-group"><div class="sched-label">Schedule '+label+'</div>'+pills+'</div>';
+              return '<div class="sched-group"><div class="sched-label">Schedule '+label+'</div>'+pillsFor(scheduleDates[label])+'</div>';
             }).join('');
           } else {
-            const dates = availableDates.map(function(x){ return x.date; });
-            sidebarDates.innerHTML = rangesFor(dates).map(function(g){
-              return '<div class="date-pill">'+g+'</div>';
-            }).join('');
+            const entries = availableDates.map(function(x){ return {date:x.date, session:x.session}; });
+            sidebarDates.innerHTML = pillsFor(entries);
           }
         }
         const params   = new URLSearchParams(window.location.search);
@@ -496,11 +490,6 @@
 
   function showErr(msg){ const e=document.getElementById('errBox'); e.textContent=msg; e.classList.add('show'); }
   function fmt(y){ if(!y)return''; const[yr,m,d]=y.split('-'); return d+'-'+m+'-'+yr; }
-  function isNextDay(a,b){
-    const da=new Date(a), db=new Date(b);
-    da.setDate(da.getDate()+1);
-    return da.toISOString().slice(0,10)===b;
-  }
 
   function renderSlotCards() {
     const grid=document.querySelector('.slots-grid'); grid.innerHTML='';
@@ -519,8 +508,11 @@
         const idx=i; // stable copy for this card
         slotSchedule[idx]=scheduleNo;
         let opts='<option value="">-- Date --</option>';
+        const seenDates={};
         availableDates.forEach(function(e){
           if (scheduleNo && e.schedule !== scheduleNo) return;
+          if (seenDates[e.date]) return; // same date can appear twice now (once per session row)
+          seenDates[e.date]=true;
           opts+='<option value="'+e.date+'"'+(SS[idx].date===e.date?' selected':'')+'>'+fmt(e.date)+'</option>';
         });
         const c=document.createElement('div'); c.className='slot-card'; c.id='card_'+idx;
