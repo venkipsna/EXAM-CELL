@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>Exam Duty Registration</title>
 <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -866,6 +869,14 @@
     const altName = nameSel.selectedOptions[0] ? nameSel.selectedOptions[0].getAttribute('data-name') : '';
     const errEl = document.getElementById('alterErr');
     errEl.classList.remove('show');
+    function showAlterErr(msg) { errEl.textContent = msg; errEl.classList.add('show'); }
+    // Guard against a stale/incomplete client state (e.g. cached script,
+    // or confSlotsData not yet loaded) instead of silently sending a
+    // request the server will reject as "Missing required fields."
+    if (!verifiedEmail) { showAlterErr('Session expired — please refresh the page and sign in again.'); return; }
+    if (!sl || sl.col === undefined || sl.col === null || !sl.date || !sl.session) {
+      showAlterErr('Slot details did not load correctly — please refresh the page and try again.'); return;
+    }
     if (!altEmail) return;
     const btn = document.getElementById('alterSubmitBtn');
     btn.disabled = true; btn.textContent = 'Sending…';
