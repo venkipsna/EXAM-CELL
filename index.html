@@ -300,7 +300,7 @@
 </div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycbwSFT0QSLvKbGN2RNsTGoffg864WgpLhWctQI4kT48akhWgjn8HGu6iV-G9X3vwcNe4/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbynV07VnT8eDYNm8NT8u3BCZE30tofXuPfnyJijFuRld4T0LhkDT-WvO4jeBYizUyZf/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
@@ -612,13 +612,18 @@
         const info=res.session;
         let p=0;
         for (let j=0; j<SLOT_COUNT; j++) if (j!==i&&SS[j].date===d&&SS[j].session===s) p++;
-        const total = info.count + p;
-        const max = info.max || 0; // 0 = no cap configured for this date+session
-        const isFull = max>0 && total>=max;
-        ae.className='slot-avail show'+(isFull?' full':' ok');
-        at.textContent = max>0
-          ? (total+' of '+max+' booked'+(isFull?' — Full':''))
-          : (total + (total===1 ? ' faculty booked so far' : ' faculty booked so far'));
+        const total = info.count + p; // booked so far, plus any other slot in THIS form targeting the same date+session
+        const max = (info.max===null||info.max===undefined) ? null : info.max;
+        if (max !== null && total >= max) {
+          ae.className='slot-avail show full';
+          at.textContent = 'Full — '+total+' of '+max+' booked';
+        } else if (max !== null) {
+          ae.className='slot-avail show'+((max-total)<=1 ? ' warn' : ' ok');
+          at.textContent = total+' of '+max+' booked';
+        } else {
+          ae.className='slot-avail show ok';
+          at.textContent = total + ' faculty booked so far';
+        }
         for (let j=0; j<SLOT_COUNT; j++) if (j!==i&&SS[j].date===d&&SS[j].session===s) chkAv(j);
         chkRdy();
       })
