@@ -216,6 +216,13 @@
       </div>
     </div>
 
+    <div class="st" id="stClosed">
+      <div class="screen">
+        <div class="ico">⛔</div><h3>Entry Closed</h3>
+        <p id="closedMsg">Entry is closed. Contact Exam Cell, PSNACET.</p>
+      </div>
+    </div>
+
     <div class="st" id="stMain">
       <div class="vbar">
         <div class="vavatar" id="vavatar">?</div>
@@ -300,7 +307,7 @@
 </div>
 <script>
   // ── Paste your deployed Apps Script Web App URL below (ends in /exec) ──
-  const API_URL = 'https://script.google.com/macros/s/AKfycbynV07VnT8eDYNm8NT8u3BCZE30tofXuPfnyJijFuRld4T0LhkDT-WvO4jeBYizUyZf/exec';
+  const API_URL = 'https://script.google.com/macros/s/AKfycbzUVJ0qLLChoyiQyy6erSiGNAK8c4XtPUJNYEUSkR44GP3Wi_1U9tgApC2qgg-owNVJ/exec';
 
   function apiGet(action, params) {
     const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
@@ -329,7 +336,7 @@
   buildSS(SLOT_COUNT);
 
   function show(id){
-    ['stLoad','stLogin','stDenied','stMain'].forEach(function(s){
+    ['stLoad','stLogin','stDenied','stClosed','stMain'].forEach(function(s){
       document.getElementById(s).classList.remove('on');
     });
     document.getElementById(id).classList.add('on');
@@ -398,6 +405,16 @@
               return '<div class="date-pill">'+g+'</div>';
             }).join('');
           }
+        }
+        if (cfg && cfg.entryClosed) {
+          const closedMsgEl = document.getElementById('closedMsg');
+          if (closedMsgEl) {
+            closedMsgEl.innerHTML = 'Entry is closed'
+              + (cfg.entryCloseDateDMY ? ' (last date was ' + cfg.entryCloseDateDMY + ')' : '')
+              + '. Contact Exam Cell, PSNACET.';
+          }
+          show('stClosed');
+          return;
         }
         const params   = new URLSearchParams(window.location.search);
         const urlEmail = params.get('email');
